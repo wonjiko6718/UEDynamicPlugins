@@ -1,0 +1,7 @@
+{
+	"BuildId": "9b83079c-2bd4-4200-b7a9-0b0ae03abada",
+	"Modules": 
+	{
+		"VehicleDynamicsPlugin": "UnrealEditor-VehicleDynamicsPlugin.dll"
+	}
+}

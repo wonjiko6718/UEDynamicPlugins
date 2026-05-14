@@ -1,0 +1,13 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.VehicleDynamicsPlugin.cpp.obj": [
+			"VehicleDynamicsAnimInstance.gen.cpp.obj",
+			"VehicleDynamicsComponent.gen.cpp.obj",
+			"VehicleDynamicsPlugin.init.gen.cpp.obj",
+			"VehicleDynamicsAnimInstance.cpp.obj",
+			"VehicleDynamicsComponent.cpp.obj",
+			"VehicleDynamicsPlugin.cpp.obj"
+		]
+	}
+}
