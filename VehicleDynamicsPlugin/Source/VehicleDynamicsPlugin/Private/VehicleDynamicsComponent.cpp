@@ -6,30 +6,21 @@
 // Sets default values for this component's properties
 UVehicleDynamicsComponent::UVehicleDynamicsComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	// ...
 }
 
-
-// Called when the game starts
 void UVehicleDynamicsComponent::BeginPlay()
 {
 	Super::BeginPlay();
     BeginSetting();
-	// ...
 	
 }
 
-
-// Called every frame
 void UVehicleDynamicsComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
     TickVehicle(DeltaTime);
-	// ...
 }
 
 void UVehicleDynamicsComponent::BeginSetting()
@@ -108,89 +99,46 @@ void UVehicleDynamicsComponent::BeginSetting()
             UE_LOG(LogTemp, Error, TEXT("Wheel Bone NOT FOUND for %s"), *S);
         }
     }
+    BodyBaseHeight = BodyBaseHeightCoeff + (WheelRadius * 2) + SpringMaxExtension; // 차체 기본 높이 = 휠 반경 * 2 + 서스펜션 최대확장 길이
+    RestLength = SpringMinExtension + (SpringMaxExtension - SpringMinExtension) * 0.75f; // 스프링 유후 길이는 최대 확장 길이와 최소 길이의 75%지점 값으로 설정
 }
 
 void UVehicleDynamicsComponent::TickVehicle(float DeltaTime)
 {
-    // 1. 속도 연산 및 이동 적용
-    CalcVelocity(DeltaTime);
-
-    // 2. 바퀴별 순차 처리
-    for (int32 i = 0; i < WheelOffset.Num(); i++)
+    CalcVelocity(DeltaTime); // 속도 연산 (아직 미구현)
+    SuspensionForceSum = 0.f; // 서스펜션 상승힘 합계 초기화
+    for (int32 i = 0; i < WheelOffset.Num(); i++) // 바퀴 처리
     {
-        SphereTraceGround(i);     // 접지 감지 및 바퀴위치 갱신
-        CalcSuspensionForce(i);   // 스프링-댐퍼
+        SphereTraceGround(i); // 접지 감지 및 바퀴위치 갱신
+        CalcSuspensionForce(i, DeltaTime);   // 스프링-댐퍼
     }
-
-    // 3. 차체 자세 계산 및 적용
-    //CalcBodyPosture();
+    ApplyGravity(DeltaTime); // 중력 및 차체 연산
+    ApplyPosture(); //최종 적용 변수를 한 번에 업데이트
 }
 
-void UVehicleDynamicsComponent::CalcSuspensionForce(int WheelIdx)
+void UVehicleDynamicsComponent::ApplyGravity(float DeltaTime)
+{
+
+}
+
+void UVehicleDynamicsComponent::CalcSuspensionForce(int WheelIdx, float DeltaTime)
 {
     if (!WheelHeight.IsValidIndex(WheelIdx))
         return;
 
-    // 현재 서스펜션 압축량 = 휴지 길이 - 현재 바퀴 높이
-    // 양수 : 압축 (바퀴가 위로 올라옴)
-    // 음수 : 인장 (바퀴가 아래로 늘어남)
-    float Displacement = RestLength - WheelHeight[WheelIdx];
-
-    // 서스펜션 변위 범위 클램프
-    Displacement = FMath::Clamp(Displacement,
-        -(SpringMaxExtension - RestLength),  // 최대 인장
-        SpringMinExtension                 // 최대 압축
-    );
-
-    // 스프링 힘 : F_spring = k * Δy
-    float SpringForce = SpringStiffness * Displacement;
-
-    // 댐퍼 힘 : F_damp = c * vy (이전 프레임과의 높이 변화율)
-    float DampForce = DampingCoeff * SuspVelocity[WheelIdx];
-
-    // 최종 서스펜션 힘
-    float TotalForce = SpringForce - DampForce;
-
-    // 다음 프레임을 위해 서스펜션 속도 갱신
-    // (현재는 WheelHeight 변화를 직접 SuspVelocity로 반영)
-    // TickVehicle에서 DeltaTime을 넘겨줘야 정확하지만
-    // 우선 변위 기반으로 근사
-    SuspVelocity[WheelIdx] = Displacement;
-
-    // 접지 중일 때만 힘 적용
-    if (bIsGrounded[WheelIdx])
-    {
-        // 바퀴 높이에 힘 반영 (질량으로 나눠 가속도 변환)
-        // TotalMass는 전체 질량, 바퀴 1개당 균등 분배
-        float WheelShare = TotalMass / WheelOffset.Num();
-        float HeightDelta = TotalForce / WheelShare;
-        WheelHeight[WheelIdx] += HeightDelta;
-
-        // 범위 클램프
-        WheelHeight[WheelIdx] = FMath::Clamp(
-            WheelHeight[WheelIdx],
-            SpringMinExtension,
-            SpringMaxExtension
-        );
-    }
-}
-
-void UVehicleDynamicsComponent::CalcBodyPosture()
-{
-    int32 WheelCount = WheelOffset.Num();
-    if (WheelCount < 2)
+    if (!bIsGrounded[WheelIdx])
         return;
 
-    // lf (인덱스 0~5) / rt (인덱스 6~11) 평균 높이 계산
-    int32 HalfCount = WheelCount / 2;
+    float Displacement = RestLength - WheelHeight[WheelIdx];
+    Displacement = FMath::Clamp(Displacement, -(SpringMaxExtension - RestLength), RestLength - SpringMinExtension);  // 압축량
 
-    float LeftHeightSum = 0.f;
-    float RightHeightSum = 0.f;
-    float FrontHeightSum = 0.f; // 앞쪽 절반
-    float RearHeightSum = 0.f; // 뒤쪽 절반
+    float SpringForce = SpringStiffness * Displacement; // 상승힘
+    float DampForce = DampingCoeff * SuspVelocity[WheelIdx];
+    float TotalForce = SpringForce - DampForce;
 
+    SuspensionForceSum += TotalForce; // 누적 상승힘 (차체 위치 계산용)
+    SuspVelocity[WheelIdx] = Displacement / DeltaTime; // 속도 저장
 }
-
 void UVehicleDynamicsComponent::SphereTraceGround(int WheelIdx)
 {
     if (!WheelOffset.IsValidIndex(WheelIdx))
@@ -222,21 +170,25 @@ void UVehicleDynamicsComponent::SphereTraceGround(int WheelIdx)
 
     if (bHit)
     {
-        // 바퀴 중심 ~ 접지점 수직 거리 (서스펜션 압축량 계산의 기준)
         WheelHeight[WheelIdx] = WorldWheelPos.Z - Hit.ImpactPoint.Z;
-        FinalWheelsLoc[WheelIdx] = FVector(WheelOffset[WheelIdx].X, WheelOffset[WheelIdx].Y, Hit.ImpactPoint.Z + WheelRadius - WheelHeight[WheelIdx]); // 최종 반환 바퀴 위치
-        FinalGroundedLoc[WheelIdx] = FVector(WheelOffset[WheelIdx].X, WheelOffset[WheelIdx].Y, Hit.ImpactPoint.Z- WheelHeight[WheelIdx]); // 최종 반환 접지 위치
-        
-        DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 5.0f, 12, FColor::Red, false, 0.1f); // 휠 위치 디버그 드로우
-        DrawDebugSphere(GetWorld(), FVector(Hit.ImpactPoint.X, Hit.ImpactPoint.Y, Hit.ImpactPoint.Z + WheelRadius), WheelRadius, 12, FColor::Green, false, 0.1f); // 휠 위치 디버그 드로우
+        GroundHitPoint[WheelIdx] = Hit.ImpactPoint;
 
+        if (bDrawHitPoints)
+        {
+            DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 5.0f, 12, FColor::Red, false, 0.1f); // 트랙 위치 디버그 드로우
+            DrawDebugSphere(GetWorld(), FVector(Hit.ImpactPoint.X, Hit.ImpactPoint.Y, Hit.ImpactPoint.Z + WheelRadius), WheelRadius, 12, FColor::Green, false, 0.1f); // 휠 위치 디버그 드로우
+        }
+        if (bDrawFinalPoints)
+        {
+            DrawDebugSphere(GetWorld(), FinalGroundedLoc[WheelIdx], 5.0f, 12, FColor::Red, false, 0.1f); // 트랙 위치 디버그 드로우
+            DrawDebugSphere(GetWorld(), FinalWheelsLoc[WheelIdx], WheelRadius, 12, FColor::Green, false, 0.1f); // 휠 위치 디버그 드로우
+        }
     }
     else
     {
         // 미접지 시 서스펜션 최대로 늘린 상태
         WheelHeight[WheelIdx] = SpringMaxExtension;
-        FinalWheelsLoc[WheelIdx] = FVector(WheelOffset[WheelIdx].X, WheelOffset[WheelIdx].Y, Hit.ImpactPoint.Z + WheelRadius - WheelHeight[WheelIdx]); // 최종 반환 바퀴 위치
-        FinalGroundedLoc[WheelIdx] = FVector(WheelOffset[WheelIdx].X, WheelOffset[WheelIdx].Y, Hit.ImpactPoint.Z - WheelHeight[WheelIdx]); // 최종 반환 접지 위치
+        GroundHitPoint[WheelIdx] = SweepEnd;
     }
 }
 
@@ -283,4 +235,8 @@ void UVehicleDynamicsComponent::CalcVelocity(float DeltaTime)
     {
         Owner->AddActorWorldOffset(CurrentVelocity * DeltaTime, true);
     }
+}
+
+void UVehicleDynamicsComponent::ApplyPosture()
+{
 }
