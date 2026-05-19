@@ -93,6 +93,7 @@ void UVehicleDynamicsComponent::BeginSetting()
             bIsGrounded.Add(0);
             FinalWheelsLoc.Add(FVector::ZeroVector);
             FinalGroundedLoc.Add(FVector::ZeroVector);
+            GroundHitPoint.Add(FVector::ZeroVector);
         }
         else
         {
@@ -118,7 +119,31 @@ void UVehicleDynamicsComponent::TickVehicle(float DeltaTime)
 
 void UVehicleDynamicsComponent::ApplyGravity(float DeltaTime)
 {
+    AActor* Owner = GetOwner();
+    if (!Owner) return;
 
+    int32 GroundedCount = 0;
+    for (int32 i = 0; i < bIsGrounded.Num(); i++)
+    {
+        if (bIsGrounded[i]) GroundedCount++;
+    }
+
+    FVector CurrentLoc = Owner->GetActorLocation();
+    FVector OldLocation = CurrentLoc;
+
+    float GravityForce = TotalMass * GravityForceCoeff;
+    float NetForce = SuspensionForceSum - GravityForce;
+
+    float Acceleration = NetForce / TotalMass;
+    GravityVelocity += Acceleration * DeltaTime;
+    GravityVelocity *= FMath::Pow(1.f - EnergyLossRate, DeltaTime); // 에너지 손실률 적용
+
+    CurrentLoc.Z += GravityVelocity * DeltaTime;
+    Owner->SetActorLocation(CurrentLoc, true);
+    if (Owner->GetActorLocation().Z == OldLocation.Z)
+    {
+        GravityVelocity = 0.f;
+    }
 }
 
 void UVehicleDynamicsComponent::CalcSuspensionForce(int WheelIdx, float DeltaTime)
@@ -127,14 +152,17 @@ void UVehicleDynamicsComponent::CalcSuspensionForce(int WheelIdx, float DeltaTim
         return;
 
     if (!bIsGrounded[WheelIdx])
+    {
+        SuspVelocity[WheelIdx] = 0.f;
         return;
+    }
 
-    float Displacement = RestLength - WheelHeight[WheelIdx];
-    Displacement = FMath::Clamp(Displacement, -(SpringMaxExtension - RestLength), RestLength - SpringMinExtension);  // 압축량
-
+    float Displacement = RestLength - WheelHeight[WheelIdx]; // 압축량
+    //Displacement = FMath::Clamp(Displacement, -(SpringMaxExtension - RestLength), RestLength - SpringMinExtension);
     float SpringForce = SpringStiffness * Displacement; // 상승힘
-    float DampForce = DampingCoeff * SuspVelocity[WheelIdx];
-    float TotalForce = SpringForce - DampForce;
+
+    float DampForce = DampingCoeff * GravityVelocity;
+    float TotalForce = SpringForce - DampForce; // 총 상승힘
 
     SuspensionForceSum += TotalForce; // 누적 상승힘 (차체 위치 계산용)
     SuspVelocity[WheelIdx] = Displacement / DeltaTime; // 속도 저장
@@ -150,8 +178,8 @@ void UVehicleDynamicsComponent::SphereTraceGround(int WheelIdx)
     FTransform CompTransform = OwnerSkeletalMeshComp->GetComponentTransform();
     FVector WorldWheelPos = CompTransform.TransformPosition(WheelOffset[WheelIdx]);
 
-    // 바퀴 중심에서 아래 방향으로 서스펜션 최대 길이만큼 트레이스
-    FVector SweepStart = WorldWheelPos;
+    // 바퀴 중심에서 아래 방향으로 서스펜션 최대 길이만큼 트레이스, 기본 스켈레탈 위치는 거의 서스펜션 최대 길이이므로 바퀴 반경만큼 제외한 지점에서 시작
+    FVector SweepStart = WorldWheelPos + FVector(0.f, 0.f, WheelRadius*2);
     FVector SweepEnd = SweepStart - FVector(0.f, 0.f, SpringMaxExtension);
 
     FHitResult Hit;
@@ -239,4 +267,56 @@ void UVehicleDynamicsComponent::CalcVelocity(float DeltaTime)
 
 void UVehicleDynamicsComponent::ApplyPosture()
 {
+    float RollMoment = 0.f;
+    float PitchMoment = 0.f;
+    float TotalForce = 0.f;
+
+    for (int32 i = 0; i < WheelOffset.Num(); i++)
+    {
+        if (!bIsGrounded[i]) continue;
+
+        float Displacement = RestLength - WheelHeight[i];
+        float WheelForce = SpringStiffness * Displacement;
+
+        // 무게중심에서 바퀴까지의 거리
+        float OffsetX = WheelOffset[i].X - CenterOfMass.X; // 전후 → Pitch
+        float OffsetY = WheelOffset[i].Y - CenterOfMass.Y; // 좌우 → Roll
+
+        PitchMoment += WheelForce * OffsetX;
+        RollMoment += WheelForce * OffsetY;
+        TotalForce += WheelForce;
+    }
+
+    if (TotalForce == 0.f) return;
+
+    // 모멘트 → 각도 변환
+    float NormalizedPitch = PitchMoment / (TotalForce * PostureScale);
+    float NormalizedRoll = RollMoment / (TotalForce * PostureScale);
+
+    float TargetPitch = FMath::RadiansToDegrees(FMath::Atan(NormalizedPitch));
+    float TargetRoll = FMath::RadiansToDegrees(FMath::Atan(NormalizedRoll));
+
+    // 보간으로 부드럽게
+    float DeltaTime = GetWorld()->GetDeltaSeconds();
+    FinalBodyRot.Pitch = FMath::FInterpTo(FinalBodyRot.Pitch, TargetPitch, DeltaTime, BodySmoothing);
+    FinalBodyRot.Roll = FMath::FInterpTo(FinalBodyRot.Roll, TargetRoll, DeltaTime, BodySmoothing);
+
+    AActor* Owner = GetOwner();
+    if (Owner)
+    {
+        FRotator CurrentRot = Owner->GetActorRotation();
+        FRotator TargetRot = FRotator(FinalBodyRot.Pitch, CurrentRot.Yaw, FinalBodyRot.Roll);
+        Owner->SetActorRotation(TargetRot);
+    }
+
+    FTransform CompTransform = OwnerSkeletalMeshComp->GetComponentTransform();
+    for (int32 i = 0; i < WheelOffset.Num(); i++)
+    {
+        FVector LocalGroundedLoc = CompTransform.InverseTransformPosition(GroundHitPoint[i]);
+        FVector LocalWheelsLoc = CompTransform.InverseTransformPosition(GroundHitPoint[i] + FVector(0.f, 0.f, WheelRadius));
+
+        FinalGroundedLoc[i] = LocalGroundedLoc;
+        FinalWheelsLoc[i] = LocalWheelsLoc;
+    }
+
 }
