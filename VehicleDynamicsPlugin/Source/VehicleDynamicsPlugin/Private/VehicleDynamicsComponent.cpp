@@ -139,7 +139,7 @@ void UVehicleDynamicsComponent::ApplyGravity(float DeltaTime)
     GravityVelocity *= FMath::Pow(1.f - EnergyLossRate, DeltaTime); // 에너지 손실률 적용
 
     CurrentLoc.Z += GravityVelocity * DeltaTime;
-    Owner->SetActorLocation(CurrentLoc, true);
+    Owner->SetActorLocation(CurrentLoc, false);
     if (Owner->GetActorLocation().Z == OldLocation.Z)
     {
         GravityVelocity = 0.f;
@@ -179,7 +179,7 @@ void UVehicleDynamicsComponent::SphereTraceGround(int WheelIdx)
     FVector WorldWheelPos = CompTransform.TransformPosition(WheelOffset[WheelIdx]);
 
     // 바퀴 중심에서 아래 방향으로 서스펜션 최대 길이만큼 트레이스, 기본 스켈레탈 위치는 거의 서스펜션 최대 길이이므로 바퀴 반경만큼 제외한 지점에서 시작
-    FVector SweepStart = WorldWheelPos + FVector(0.f, 0.f, WheelRadius*2);
+    FVector SweepStart = WorldWheelPos + FVector(0.f, 0.f, WheelRadius);
     FVector SweepEnd = SweepStart - FVector(0.f, 0.f, SpringMaxExtension);
 
     FHitResult Hit;
@@ -198,8 +198,12 @@ void UVehicleDynamicsComponent::SphereTraceGround(int WheelIdx)
 
     if (bHit)
     {
-        WheelHeight[WheelIdx] = WorldWheelPos.Z - Hit.ImpactPoint.Z;
+        float RawHeight = WorldWheelPos.Z - Hit.ImpactPoint.Z;
+        // 이전 값과 보간해서 급격한 변화 완화
+        WheelHeight[WheelIdx] = FMath::FInterpTo(WheelHeight[WheelIdx], RawHeight, GetWorld()->GetDeltaSeconds(), WheelSmoothing);
         GroundHitPoint[WheelIdx] = Hit.ImpactPoint;
+        //WheelHeight[WheelIdx] = WorldWheelPos.Z - Hit.ImpactPoint.Z;
+        //GroundHitPoint[WheelIdx] = Hit.ImpactPoint;
 
         if (bDrawHitPoints)
         {
@@ -299,7 +303,7 @@ void UVehicleDynamicsComponent::ApplyPosture()
     // 보간으로 부드럽게
     float DeltaTime = GetWorld()->GetDeltaSeconds();
     FinalBodyRot.Pitch = FMath::FInterpTo(FinalBodyRot.Pitch, TargetPitch, DeltaTime, BodySmoothing);
-    FinalBodyRot.Roll = FMath::FInterpTo(FinalBodyRot.Roll, TargetRoll, DeltaTime, BodySmoothing);
+    FinalBodyRot.Roll = FMath::FInterpTo(FinalBodyRot.Roll, -TargetRoll, DeltaTime, BodySmoothing);
 
     AActor* Owner = GetOwner();
     if (Owner)

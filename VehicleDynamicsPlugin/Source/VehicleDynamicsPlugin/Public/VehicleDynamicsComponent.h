@@ -4,6 +4,7 @@
 
 #include "EngineMinimal.h"
 #include "Components/ActorComponent.h"
+#include "GameFramework/FloatingPawnMovement.h"
 #include "VehicleDynamicsComponent.generated.h"
 
 
@@ -39,7 +40,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wheel") TArray<FVector> WheelOffset; // 로컬 바퀴 상대위치(기본 위치)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wheel") float WheelRadius; // 바퀴 반경(구) - SphereTrace로 접지 위치 계산
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wheel") float WheelMass; // 바퀴 관성
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wheel") float WheelMass; // 바퀴 질량
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wheel") float WheelSmoothing = 15.0f; // 바퀴 관성
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Suspension") float SpringMaxExtension = 5; // 최대 서스펜션 높이
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Suspension") float SpringMinExtension = 2; // 최소 서스펜션 높이
@@ -54,7 +56,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float BodySmoothing; // 차체 Interp 속도 제어
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float BodyBaseHeightCoeff = 20.f; // 차체 베이스 높이 보간상수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float BodyBaseHeight; // 차체 베이스 높이
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float PostureScale = 5000.0f; // 차체 변화량 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float PostureScale = 5000.0f; // 차체 변화량 (적을수록 크게 변화)
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FinalValue") FRotator FinalBodyRot; // 최종 적용 차체 회전
@@ -65,12 +67,13 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Input") float SteeringAxis; // 조향 인풋
 
 	UPROPERTY(EditAnywhere, Category = "Debug") bool bDrawHitPoints = true; // 레이트레이스 디버그 옵션
-	UPROPERTY(EditAnywhere, Category = "Debug") float bDrawFinalPoints = true; // 최종 반환값 디버그 옵션
+	UPROPERTY(EditAnywhere, Category = "Debug") bool bDrawFinalPoints = true; // 최종 반환값 디버그 옵션
 
 private:
 
 	UPROPERTY(VisibleAnywhere, Category = "CalcState") FRotator CurrentBodyRotation; // 연산용 차체 회전 저장값
 	UPROPERTY(VisibleAnywhere, Category = "CalcState") USkeletalMeshComponent* OwnerSkeletalMeshComp; // 차량 본 정보 취득을 위한 스켈레탈 메시
+	UPROPERTY(VisibleAnywhere, Category = "CalcState") UFloatingPawnMovement* OwnerPawnMovement; // 차량 속도 제어를 위한 Pawn Movement
 
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") FVector CurrentVelocity; // 현재 속도
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") float CurrentSpeed; // 현재 속력
