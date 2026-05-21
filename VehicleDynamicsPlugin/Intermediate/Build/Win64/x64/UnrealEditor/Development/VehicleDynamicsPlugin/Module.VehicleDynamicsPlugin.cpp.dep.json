@@ -206,6 +206,8 @@
             "c:\\unrealengine-5.3.2-release\\engine\\source\\runtime\\engine\\classes\\kismet\\gameplaystaticstypes.h",
             "c:\\unrealengine-5.3.2-release\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\gameplaystaticstypes.generated.h",
             "c:\\unrealengine-5.3.2-release\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\gameplaystatics.generated.h",
+            "c:\\unrealengine-5.3.2-release\\engine\\source\\runtime\\engine\\classes\\gameframework\\floatingpawnmovement.h",
+            "c:\\unrealengine-5.3.2-release\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\floatingpawnmovement.generated.h",
             "d:\\ue_projects\\custompluginsproject\\plugins\\vehicledynamicsplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\vehicledynamicsplugin\\uht\\vehicledynamicscomponent.generated.h",
             "d:\\ue_projects\\custompluginsproject\\plugins\\vehicledynamicsplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\vehicledynamicsplugin\\uht\\vehicledynamicsplugin.init.gen.cpp",
             "d:\\ue_projects\\custompluginsproject\\plugins\\vehicledynamicsplugin\\source\\vehicledynamicsplugin\\private\\vehicledynamicsaniminstance.cpp",

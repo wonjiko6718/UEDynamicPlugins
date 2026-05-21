@@ -29,9 +29,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float MaxSpeed; // 제어용 최대 속도
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float AccelRate; // 가속 계수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float BrakeRate; // 제동 계수
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") TArray<float> GearMaxSpeedArray; // 기어별 최대 속도 배열
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") TArray<float> GearAccelerationArray; // 기어별 가속도 배열
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float DragCoeff; // 공기,노면 저항 상수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float GravityForceCoeff = 980.f; // 중력 상수 9.8
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float EnergyLossRate = 0.9f; // 힘 감쇠
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float EnergyLossRate = 0.9f; // 중력 힘 감쇠
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") int32 CalcInterval = 30; // 프레임 최적화를 위한 연산 주기
 
 	//Vehicle Setting Param
@@ -54,10 +56,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float MaxRollAngle; // 차체 최대 Roll
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float MaxPitchAngle; // 차체 최대 Pitch
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float BodySmoothing; // 차체 Interp 속도 제어
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float BodyBaseHeightCoeff = 20.f; // 차체 베이스 높이 보간상수
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float BodyBaseHeight; // 차체 베이스 높이
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float PostureScale = 5000.0f; // 차체 변화량 (적을수록 크게 변화)
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float PostureScale = 100.0f; // 차체 변화량 (적을수록 크게 변화)
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FinalValue") FRotator FinalBodyRot; // 최종 적용 차체 회전
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FinalValue") TArray<FVector> FinalWheelsLoc; // 최종 적용 휠 위치
@@ -65,6 +64,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "Input") float ThrottleAxis; // 스로틀 인풋
 	UPROPERTY(VisibleAnywhere, Category = "Input") float SteeringAxis; // 조향 인풋
+	UPROPERTY(EditAnywhere, Category = "Input") int32 GeerNum; // 기어 인풋
 
 	UPROPERTY(EditAnywhere, Category = "Debug") bool bDrawHitPoints = true; // 레이트레이스 디버그 옵션
 	UPROPERTY(EditAnywhere, Category = "Debug") bool bDrawFinalPoints = true; // 최종 반환값 디버그 옵션
@@ -83,9 +83,6 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") TArray<float> WheelHeight; // 스켈레탈 기준의 바퀴 상대길이(음수 - 늘어남)
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") TArray<float> SuspVelocity; // 서스펜션 속도 힘
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") TArray<bool> bIsGrounded; // 각 바퀴 접지 여부
-
-
-	float testNum;
 
 public:
 

@@ -43,6 +43,13 @@ void UVehicleDynamicsComponent::BeginSetting()
         UE_LOG(LogTemp, Error, TEXT("VehicleDynamicComponent : SkeletalMesh not assigned"));
         return;
     }
+    // 소유 액터의 Floating Pawn Movement 받아오기
+    OwnerPawnMovement = Owner->FindComponentByClass<UFloatingPawnMovement>();
+    if (!OwnerPawnMovement)
+    {
+        UE_LOG(LogTemp, Error, TEXT("VehicleDynamicComponent : Floating Pawn Movement not assigned"));
+        return;
+    }
     //Skeletal Mesh를 찾았다면 바퀴 Bone 가져오기
     const int32 BoneCount = OwnerSkeletalMeshComp->GetNumBones();
 
@@ -100,7 +107,6 @@ void UVehicleDynamicsComponent::BeginSetting()
             UE_LOG(LogTemp, Error, TEXT("Wheel Bone NOT FOUND for %s"), *S);
         }
     }
-    BodyBaseHeight = BodyBaseHeightCoeff + (WheelRadius * 2) + SpringMaxExtension; // 차체 기본 높이 = 휠 반경 * 2 + 서스펜션 최대확장 길이
     RestLength = SpringMinExtension + (SpringMaxExtension - SpringMinExtension) * 0.75f; // 스프링 유후 길이는 최대 확장 길이와 최소 길이의 75%지점 값으로 설정
 }
 
@@ -226,13 +232,9 @@ void UVehicleDynamicsComponent::SphereTraceGround(int WheelIdx)
 
 void UVehicleDynamicsComponent::CalcVelocity(float DeltaTime)
 {
-    // 입력 축 기반 가속도 계산
     float TargetAccel = ThrottleAxis * AccelRate;
-
-    // 현재 속력 기반 항력 계산 (속력에 비례)
     float Drag = CurrentSpeed * DragCoeff;
 
-    // 제동 입력 처리
     float BrakeForce = 0.f;
     if (FMath::Abs(ThrottleAxis) < 0.01f) // 입력 없을 때 자연 감속
     {
@@ -259,13 +261,6 @@ void UVehicleDynamicsComponent::CalcVelocity(float DeltaTime)
     {
         CurrentVelocity = FVector::ZeroVector;
         CurrentSpeed = 0.f;
-    }
-
-    // 실제 액터 이동 적용
-    AActor* Owner = GetOwner();
-    if (Owner)
-    {
-        Owner->AddActorWorldOffset(CurrentVelocity * DeltaTime, true);
     }
 }
 

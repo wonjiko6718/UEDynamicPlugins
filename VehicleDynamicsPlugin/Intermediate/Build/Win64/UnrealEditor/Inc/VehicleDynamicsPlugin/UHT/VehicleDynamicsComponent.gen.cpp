@@ -365,6 +365,16 @@ void EmptyLinkFunctionForGeneratedCodeVehicleDynamicsComponent() {}
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_BrakeRate_MetaData[];
 #endif
 		static const UECodeGen_Private::FFloatPropertyParams NewProp_BrakeRate;
+		static const UECodeGen_Private::FFloatPropertyParams NewProp_GearMaxSpeedArray_Inner;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_GearMaxSpeedArray_MetaData[];
+#endif
+		static const UECodeGen_Private::FArrayPropertyParams NewProp_GearMaxSpeedArray;
+		static const UECodeGen_Private::FFloatPropertyParams NewProp_GearAccelerationArray_Inner;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_GearAccelerationArray_MetaData[];
+#endif
+		static const UECodeGen_Private::FArrayPropertyParams NewProp_GearAccelerationArray;
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_DragCoeff_MetaData[];
 #endif
@@ -449,14 +459,6 @@ void EmptyLinkFunctionForGeneratedCodeVehicleDynamicsComponent() {}
 #endif
 		static const UECodeGen_Private::FFloatPropertyParams NewProp_BodySmoothing;
 #if WITH_METADATA
-		static const UECodeGen_Private::FMetaDataPairParam NewProp_BodyBaseHeightCoeff_MetaData[];
-#endif
-		static const UECodeGen_Private::FFloatPropertyParams NewProp_BodyBaseHeightCoeff;
-#if WITH_METADATA
-		static const UECodeGen_Private::FMetaDataPairParam NewProp_BodyBaseHeight_MetaData[];
-#endif
-		static const UECodeGen_Private::FFloatPropertyParams NewProp_BodyBaseHeight;
-#if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_PostureScale_MetaData[];
 #endif
 		static const UECodeGen_Private::FFloatPropertyParams NewProp_PostureScale;
@@ -482,6 +484,10 @@ void EmptyLinkFunctionForGeneratedCodeVehicleDynamicsComponent() {}
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_SteeringAxis_MetaData[];
 #endif
 		static const UECodeGen_Private::FFloatPropertyParams NewProp_SteeringAxis;
+#if WITH_METADATA
+		static const UECodeGen_Private::FMetaDataPairParam NewProp_GeerNum_MetaData[];
+#endif
+		static const UECodeGen_Private::FIntPropertyParams NewProp_GeerNum;
 #if WITH_METADATA
 		static const UECodeGen_Private::FMetaDataPairParam NewProp_bDrawHitPoints_MetaData[];
 #endif
@@ -606,8 +612,9 @@ void EmptyLinkFunctionForGeneratedCodeVehicleDynamicsComponent() {}
 	};
 #endif
 	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BrakeRate = { "BrakeRate", nullptr, (EPropertyFlags)0x0010000000000015, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(UVehicleDynamicsComponent, BrakeRate), METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BrakeRate_MetaData), Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BrakeRate_MetaData) };
+	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GearMaxSpeedArray_Inner = { "GearMaxSpeedArray", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, 0, METADATA_PARAMS(0, nullptr) };
 #if WITH_METADATA
-	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_DragCoeff_MetaData[] = {
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GearMaxSpeedArray_MetaData[] = {
 		{ "Category", "VelocityParam" },
 #if !UE_BUILD_SHIPPING
 		{ "Comment", "// \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\n" },
@@ -615,6 +622,33 @@ void EmptyLinkFunctionForGeneratedCodeVehicleDynamicsComponent() {}
 		{ "ModuleRelativePath", "Public/VehicleDynamicsComponent.h" },
 #if !UE_BUILD_SHIPPING
 		{ "ToolTip", "\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd" },
+#endif
+	};
+#endif
+	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GearMaxSpeedArray = { "GearMaxSpeedArray", nullptr, (EPropertyFlags)0x0010000000000015, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(UVehicleDynamicsComponent, GearMaxSpeedArray), EArrayPropertyFlags::None, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GearMaxSpeedArray_MetaData), Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GearMaxSpeedArray_MetaData) };
+	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GearAccelerationArray_Inner = { "GearAccelerationArray", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, 0, METADATA_PARAMS(0, nullptr) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GearAccelerationArray_MetaData[] = {
+		{ "Category", "VelocityParam" },
+#if !UE_BUILD_SHIPPING
+		{ "Comment", "// \xef\xbf\xbd\xef\xbf\xbd\xee\xba\xb0 \xef\xbf\xbd\xd6\xb4\xef\xbf\xbd \xef\xbf\xbd\xd3\xb5\xef\xbf\xbd \xef\xbf\xbd\xe8\xbf\xad\n" },
+#endif
+		{ "ModuleRelativePath", "Public/VehicleDynamicsComponent.h" },
+#if !UE_BUILD_SHIPPING
+		{ "ToolTip", "\xef\xbf\xbd\xef\xbf\xbd\xee\xba\xb0 \xef\xbf\xbd\xd6\xb4\xef\xbf\xbd \xef\xbf\xbd\xd3\xb5\xef\xbf\xbd \xef\xbf\xbd\xe8\xbf\xad" },
+#endif
+	};
+#endif
+	const UECodeGen_Private::FArrayPropertyParams Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GearAccelerationArray = { "GearAccelerationArray", nullptr, (EPropertyFlags)0x0010000000000015, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(UVehicleDynamicsComponent, GearAccelerationArray), EArrayPropertyFlags::None, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GearAccelerationArray_MetaData), Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GearAccelerationArray_MetaData) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_DragCoeff_MetaData[] = {
+		{ "Category", "VelocityParam" },
+#if !UE_BUILD_SHIPPING
+		{ "Comment", "// \xef\xbf\xbd\xef\xbf\xbd\xee\xba\xb0 \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xd3\xb5\xef\xbf\xbd \xef\xbf\xbd\xe8\xbf\xad\n" },
+#endif
+		{ "ModuleRelativePath", "Public/VehicleDynamicsComponent.h" },
+#if !UE_BUILD_SHIPPING
+		{ "ToolTip", "\xef\xbf\xbd\xef\xbf\xbd\xee\xba\xb0 \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xd3\xb5\xef\xbf\xbd \xef\xbf\xbd\xe8\xbf\xad" },
 #endif
 	};
 #endif
@@ -649,11 +683,11 @@ void EmptyLinkFunctionForGeneratedCodeVehicleDynamicsComponent() {}
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_CalcInterval_MetaData[] = {
 		{ "Category", "VelocityParam" },
 #if !UE_BUILD_SHIPPING
-		{ "Comment", "// \xef\xbf\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\n" },
+		{ "Comment", "// \xef\xbf\xbd\xdf\xb7\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\n" },
 #endif
 		{ "ModuleRelativePath", "Public/VehicleDynamicsComponent.h" },
 #if !UE_BUILD_SHIPPING
-		{ "ToolTip", "\xef\xbf\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd" },
+		{ "ToolTip", "\xef\xbf\xbd\xdf\xb7\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd" },
 #endif
 	};
 #endif
@@ -870,7 +904,7 @@ void EmptyLinkFunctionForGeneratedCodeVehicleDynamicsComponent() {}
 #endif
 	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BodySmoothing = { "BodySmoothing", nullptr, (EPropertyFlags)0x0010000000000015, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(UVehicleDynamicsComponent, BodySmoothing), METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BodySmoothing_MetaData), Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BodySmoothing_MetaData) };
 #if WITH_METADATA
-	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BodyBaseHeightCoeff_MetaData[] = {
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_PostureScale_MetaData[] = {
 		{ "Category", "Body" },
 #if !UE_BUILD_SHIPPING
 		{ "Comment", "// \xef\xbf\xbd\xef\xbf\xbd\xc3\xbc Interp \xef\xbf\xbd\xd3\xb5\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\n" },
@@ -878,32 +912,6 @@ void EmptyLinkFunctionForGeneratedCodeVehicleDynamicsComponent() {}
 		{ "ModuleRelativePath", "Public/VehicleDynamicsComponent.h" },
 #if !UE_BUILD_SHIPPING
 		{ "ToolTip", "\xef\xbf\xbd\xef\xbf\xbd\xc3\xbc Interp \xef\xbf\xbd\xd3\xb5\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd" },
-#endif
-	};
-#endif
-	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BodyBaseHeightCoeff = { "BodyBaseHeightCoeff", nullptr, (EPropertyFlags)0x0010000000000015, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(UVehicleDynamicsComponent, BodyBaseHeightCoeff), METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BodyBaseHeightCoeff_MetaData), Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BodyBaseHeightCoeff_MetaData) };
-#if WITH_METADATA
-	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BodyBaseHeight_MetaData[] = {
-		{ "Category", "Body" },
-#if !UE_BUILD_SHIPPING
-		{ "Comment", "// \xef\xbf\xbd\xef\xbf\xbd\xc3\xbc \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xcc\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\n" },
-#endif
-		{ "ModuleRelativePath", "Public/VehicleDynamicsComponent.h" },
-#if !UE_BUILD_SHIPPING
-		{ "ToolTip", "\xef\xbf\xbd\xef\xbf\xbd\xc3\xbc \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xcc\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd" },
-#endif
-	};
-#endif
-	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BodyBaseHeight = { "BodyBaseHeight", nullptr, (EPropertyFlags)0x0010000000000015, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(UVehicleDynamicsComponent, BodyBaseHeight), METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BodyBaseHeight_MetaData), Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BodyBaseHeight_MetaData) };
-#if WITH_METADATA
-	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_PostureScale_MetaData[] = {
-		{ "Category", "Body" },
-#if !UE_BUILD_SHIPPING
-		{ "Comment", "// \xef\xbf\xbd\xef\xbf\xbd\xc3\xbc \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xcc\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\n" },
-#endif
-		{ "ModuleRelativePath", "Public/VehicleDynamicsComponent.h" },
-#if !UE_BUILD_SHIPPING
-		{ "ToolTip", "\xef\xbf\xbd\xef\xbf\xbd\xc3\xbc \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xcc\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd" },
 #endif
 	};
 #endif
@@ -976,14 +984,27 @@ void EmptyLinkFunctionForGeneratedCodeVehicleDynamicsComponent() {}
 #endif
 	const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_SteeringAxis = { "SteeringAxis", nullptr, (EPropertyFlags)0x0010000000020001, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(UVehicleDynamicsComponent, SteeringAxis), METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_SteeringAxis_MetaData), Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_SteeringAxis_MetaData) };
 #if WITH_METADATA
-	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_bDrawHitPoints_MetaData[] = {
-		{ "Category", "Debug" },
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GeerNum_MetaData[] = {
+		{ "Category", "Input" },
 #if !UE_BUILD_SHIPPING
 		{ "Comment", "// \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xc7\xb2\n" },
 #endif
 		{ "ModuleRelativePath", "Public/VehicleDynamicsComponent.h" },
 #if !UE_BUILD_SHIPPING
 		{ "ToolTip", "\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xc7\xb2" },
+#endif
+	};
+#endif
+	const UECodeGen_Private::FIntPropertyParams Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GeerNum = { "GeerNum", nullptr, (EPropertyFlags)0x0010000000000001, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(UVehicleDynamicsComponent, GeerNum), METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GeerNum_MetaData), Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GeerNum_MetaData) };
+#if WITH_METADATA
+	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_bDrawHitPoints_MetaData[] = {
+		{ "Category", "Debug" },
+#if !UE_BUILD_SHIPPING
+		{ "Comment", "// \xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xc7\xb2\n" },
+#endif
+		{ "ModuleRelativePath", "Public/VehicleDynamicsComponent.h" },
+#if !UE_BUILD_SHIPPING
+		{ "ToolTip", "\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd \xef\xbf\xbd\xef\xbf\xbd\xc7\xb2" },
 #endif
 	};
 #endif
@@ -1156,6 +1177,10 @@ void EmptyLinkFunctionForGeneratedCodeVehicleDynamicsComponent() {}
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_MaxSpeed,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_AccelRate,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BrakeRate,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GearMaxSpeedArray_Inner,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GearMaxSpeedArray,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GearAccelerationArray_Inner,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GearAccelerationArray,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_DragCoeff,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GravityForceCoeff,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_EnergyLossRate,
@@ -1179,8 +1204,6 @@ void EmptyLinkFunctionForGeneratedCodeVehicleDynamicsComponent() {}
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_MaxRollAngle,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_MaxPitchAngle,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BodySmoothing,
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BodyBaseHeightCoeff,
-		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_BodyBaseHeight,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_PostureScale,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_FinalBodyRot,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_FinalWheelsLoc_Inner,
@@ -1189,6 +1212,7 @@ void EmptyLinkFunctionForGeneratedCodeVehicleDynamicsComponent() {}
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_FinalGroundedLoc,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_ThrottleAxis,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_SteeringAxis,
+		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_GeerNum,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_bDrawHitPoints,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_bDrawFinalPoints,
 		(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UVehicleDynamicsComponent_Statics::NewProp_CurrentBodyRotation,
@@ -1245,9 +1269,9 @@ void EmptyLinkFunctionForGeneratedCodeVehicleDynamicsComponent() {}
 		static const FClassRegisterCompiledInInfo ClassInfo[];
 	};
 	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_CustomPluginsProject_Plugins_VehicleDynamicsPlugin_Source_VehicleDynamicsPlugin_Public_VehicleDynamicsComponent_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_UVehicleDynamicsComponent, UVehicleDynamicsComponent::StaticClass, TEXT("UVehicleDynamicsComponent"), &Z_Registration_Info_UClass_UVehicleDynamicsComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVehicleDynamicsComponent), 3029412931U) },
+		{ Z_Construct_UClass_UVehicleDynamicsComponent, UVehicleDynamicsComponent::StaticClass, TEXT("UVehicleDynamicsComponent"), &Z_Registration_Info_UClass_UVehicleDynamicsComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVehicleDynamicsComponent), 1717138900U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_CustomPluginsProject_Plugins_VehicleDynamicsPlugin_Source_VehicleDynamicsPlugin_Public_VehicleDynamicsComponent_h_1621094033(TEXT("/Script/VehicleDynamicsPlugin"),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_CustomPluginsProject_Plugins_VehicleDynamicsPlugin_Source_VehicleDynamicsPlugin_Public_VehicleDynamicsComponent_h_585081146(TEXT("/Script/VehicleDynamicsPlugin"),
 		Z_CompiledInDeferFile_FID_CustomPluginsProject_Plugins_VehicleDynamicsPlugin_Source_VehicleDynamicsPlugin_Public_VehicleDynamicsComponent_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_CustomPluginsProject_Plugins_VehicleDynamicsPlugin_Source_VehicleDynamicsPlugin_Public_VehicleDynamicsComponent_h_Statics::ClassInfo),
 		nullptr, 0,
 		nullptr, 0);
