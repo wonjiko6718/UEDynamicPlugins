@@ -17,7 +17,7 @@ void EmptyLinkFunctionForGeneratedCodeVehicleDynamicsPlugin_init() {}
 				nullptr,
 				0,
 				PKG_CompiledIn | 0x00000000,
-				0xCAE6DBB3,
+				0xB9122A84,
 				0xFCB7E9E0,
 				METADATA_PARAMS(0, nullptr)
 			};
@@ -25,5 +25,5 @@ void EmptyLinkFunctionForGeneratedCodeVehicleDynamicsPlugin_init() {}
 		}
 		return Z_Registration_Info_UPackage__Script_VehicleDynamicsPlugin.OuterSingleton;
 	}
-	static FRegisterCompiledInInfo Z_CompiledInDeferPackage_UPackage__Script_VehicleDynamicsPlugin(Z_Construct_UPackage__Script_VehicleDynamicsPlugin, TEXT("/Script/VehicleDynamicsPlugin"), Z_Registration_Info_UPackage__Script_VehicleDynamicsPlugin, CONSTRUCT_RELOAD_VERSION_INFO(FPackageReloadVersionInfo, 0xCAE6DBB3, 0xFCB7E9E0));
+	static FRegisterCompiledInInfo Z_CompiledInDeferPackage_UPackage__Script_VehicleDynamicsPlugin(Z_Construct_UPackage__Script_VehicleDynamicsPlugin, TEXT("/Script/VehicleDynamicsPlugin"), Z_Registration_Info_UPackage__Script_VehicleDynamicsPlugin, CONSTRUCT_RELOAD_VERSION_INFO(FPackageReloadVersionInfo, 0xB9122A84, 0xFCB7E9E0));
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

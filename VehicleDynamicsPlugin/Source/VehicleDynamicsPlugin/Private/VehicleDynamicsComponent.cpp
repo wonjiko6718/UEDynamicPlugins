@@ -120,7 +120,21 @@ void UVehicleDynamicsComponent::TickVehicle(float DeltaTime)
         CalcSuspensionForce(i, DeltaTime);   // 스프링-댐퍼
     }
     ApplyGravity(DeltaTime); // 중력 및 차체 연산
-    ApplyPosture(); //최종 적용 변수를 한 번에 업데이트
+    ApplyPosture(DeltaTime); //최종 적용 변수를 한 번에 업데이트
+}
+
+void UVehicleDynamicsComponent::SelectGear(int32 SelectNum)
+{
+    SelectedGearNum = SelectNum;
+    if (GearMaxSpeedArray.IsValidIndex(SelectedGearNum))
+    {
+        BaseMaxSpeed = GearMaxSpeedArray[SelectedGearNum]; // 기준 최대속도 - 최종 적용은 CalVelocity 에서
+        OwnerPawnMovement->MaxSpeed = BaseMaxSpeed; // 최대속도는 우선 적용(이후 삭제 가능)
+    }
+    if (GearAccelerationArray.IsValidIndex(SelectedGearNum))
+    {
+        BaseAcceleration = GearAccelerationArray[SelectedGearNum]; // 기준 가속도 - 최종 적용은 CalVelocity 에서
+    }
 }
 
 void UVehicleDynamicsComponent::ApplyGravity(float DeltaTime)
@@ -200,8 +214,10 @@ void UVehicleDynamicsComponent::SphereTraceGround(int WheelIdx)
 
     // 결과 저장
     bIsGrounded[WheelIdx] = bHit;
-    DrawDebugLine(GetWorld(), SweepStart, SweepEnd, FColor::Yellow, false, 0.05f, 1, 5.0f);
-
+    if (bDrawTrace)
+    {
+        DrawDebugLine(GetWorld(), SweepStart, SweepEnd, FColor::Yellow, false, 0.05f, 1, 5.0f);
+    }
     if (bHit)
     {
         float RawHeight = WorldWheelPos.Z - Hit.ImpactPoint.Z;
@@ -211,15 +227,10 @@ void UVehicleDynamicsComponent::SphereTraceGround(int WheelIdx)
         //WheelHeight[WheelIdx] = WorldWheelPos.Z - Hit.ImpactPoint.Z;
         //GroundHitPoint[WheelIdx] = Hit.ImpactPoint;
 
-        if (bDrawHitPoints)
+        if (bDrawTrace)
         {
             DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 5.0f, 12, FColor::Red, false, 0.1f); // 트랙 위치 디버그 드로우
             DrawDebugSphere(GetWorld(), FVector(Hit.ImpactPoint.X, Hit.ImpactPoint.Y, Hit.ImpactPoint.Z + WheelRadius), WheelRadius, 12, FColor::Green, false, 0.1f); // 휠 위치 디버그 드로우
-        }
-        if (bDrawFinalPoints)
-        {
-            DrawDebugSphere(GetWorld(), FinalGroundedLoc[WheelIdx], 5.0f, 12, FColor::Red, false, 0.1f); // 트랙 위치 디버그 드로우
-            DrawDebugSphere(GetWorld(), FinalWheelsLoc[WheelIdx], WheelRadius, 12, FColor::Green, false, 0.1f); // 휠 위치 디버그 드로우
         }
     }
     else
@@ -232,44 +243,36 @@ void UVehicleDynamicsComponent::SphereTraceGround(int WheelIdx)
 
 void UVehicleDynamicsComponent::CalcVelocity(float DeltaTime)
 {
-    float TargetAccel = ThrottleAxis * AccelRate;
-    float Drag = CurrentSpeed * DragCoeff;
 
-    float BrakeForce = 0.f;
-    if (FMath::Abs(ThrottleAxis) < 0.01f) // 입력 없을 때 자연 감속
-    {
-        BrakeForce = CurrentSpeed * BrakeRate;
-    }
+    float TempCalcMaxSpeed = BaseMaxSpeed; // 최종 적용을 위한 임시 최대속도 변수
+    float TempCalcAcceleration = BaseAcceleration; // 최종 적용을 위한 임시 가속도 변수
 
-    // 가속도 최종값
-    float Acceleration = TargetAccel - Drag - BrakeForce;
+    //0. 준비 과정에서 가속 비율 적용
+    TempCalcAcceleration *= AccelRate;
+    //1. 기준 가속도, 최대 속도에서 제동 상수(마찰력 등)을 감쇠(배율 적용)
+    TempCalcMaxSpeed *= (1.f - DragCoeff);
+    TempCalcAcceleration *= (1.f- DragCoeff);
+    //2. 최종 속도, 가속 적용
+    OwnerPawnMovement->MaxSpeed = TempCalcMaxSpeed;
+    OwnerPawnMovement->Acceleration = TempCalcAcceleration;
 
-    // 속도 적분 (Euler)
-    FVector ForwardDir = OwnerSkeletalMeshComp->GetForwardVector();
-    CurrentVelocity += ForwardDir * Acceleration * DeltaTime;
-
-    // 최대 속도 클램프
-    CurrentSpeed = CurrentVelocity.Size();
-    if (CurrentSpeed > MaxSpeed)
-    {
-        CurrentVelocity = CurrentVelocity.GetSafeNormal() * MaxSpeed;
-        CurrentSpeed = MaxSpeed;
-    }
-
-    // 속력이 매우 낮으면 완전 정지
-    if (CurrentSpeed < 1.f && FMath::Abs(ThrottleAxis) < 0.01f)
-    {
-        CurrentVelocity = FVector::ZeroVector;
-        CurrentSpeed = 0.f;
-    }
+    PrevSpeed = CurrentSpeed; // 이전 속도 저장
+    CurrentSpeed = OwnerPawnMovement->Velocity.Size(); // 현재 속도 저장
 }
 
-void UVehicleDynamicsComponent::ApplyPosture()
+void UVehicleDynamicsComponent::ImpactEvent()
+{
+
+}
+
+void UVehicleDynamicsComponent::ApplyPosture(float DeltaTime)
 {
     float RollMoment = 0.f;
     float PitchMoment = 0.f;
     float TotalForce = 0.f;
+    float SpeedDelta = CurrentSpeed - PrevSpeed; // 양수 = 가속, 음수 = 감속 - 속도에 따른 Pitch변화 연산
 
+    //1. 바퀴 연산
     for (int32 i = 0; i < WheelOffset.Num(); i++)
     {
         if (!bIsGrounded[i]) continue;
@@ -288,6 +291,10 @@ void UVehicleDynamicsComponent::ApplyPosture()
 
     if (TotalForce == 0.f) return;
 
+    //2. 속도에 따른 차체 관성 연산
+    float SpeedPitch = - SpeedDelta * ( PostureScale * 0.1f ); // 속도에 의한 관성은 너무 과하지 않도록 스케일 조정
+    if (SpeedPitch > MaxPitchAngle) SpeedPitch = MaxPitchAngle; // 최대 흔들림 값이 넘을 경우 보간
+    CurrentSpeedPitch = FMath::FInterpTo(CurrentSpeedPitch, SpeedPitch, DeltaTime, 1.f); // 차체 떨림 시간 보간
     // 모멘트 → 각도 변환
     float NormalizedPitch = PitchMoment / (TotalForce * PostureScale);
     float NormalizedRoll = RollMoment / (TotalForce * PostureScale);
@@ -295,8 +302,9 @@ void UVehicleDynamicsComponent::ApplyPosture()
     float TargetPitch = FMath::RadiansToDegrees(FMath::Atan(NormalizedPitch));
     float TargetRoll = FMath::RadiansToDegrees(FMath::Atan(NormalizedRoll));
 
+    TargetPitch += CurrentSpeedPitch; // 최종 Pitch에 속도 관성 추가
+
     // 보간으로 부드럽게
-    float DeltaTime = GetWorld()->GetDeltaSeconds();
     FinalBodyRot.Pitch = FMath::FInterpTo(FinalBodyRot.Pitch, TargetPitch, DeltaTime, BodySmoothing);
     FinalBodyRot.Roll = FMath::FInterpTo(FinalBodyRot.Roll, -TargetRoll, DeltaTime, BodySmoothing);
 
@@ -317,5 +325,5 @@ void UVehicleDynamicsComponent::ApplyPosture()
         FinalGroundedLoc[i] = LocalGroundedLoc;
         FinalWheelsLoc[i] = LocalWheelsLoc;
     }
-
+    CurrentBodyRotation = GetOwner()->GetActorRotation(); // 차체 회전값 저장 - Root가 차체 Box이므로 차체 회전값을 즉시 적용함
 }
