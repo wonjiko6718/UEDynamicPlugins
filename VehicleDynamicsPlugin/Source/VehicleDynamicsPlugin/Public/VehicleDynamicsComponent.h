@@ -61,7 +61,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float MaxRollAngle = 30.f; // 차체 최대 Roll
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float MaxPitchAngle = 30.f; // 차체 최대 Pitch
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float BodySmoothing; // 차체 Interp 속도 제어
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float PostureScale = 100.0f; // 차체 변화량 (클수록 크게 변화)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float PostureScale = 100.0f; // 베이스 차체 변화량 (클수록 크게 변화)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float ImpactStiffness = 0.15f; // 충격 복원력
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float ImpactDamping = 0.15f; // 충격 감쇠 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float ImpactInputScale = 0.15f; // 충격 입력 크기
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FinalValue") FRotator FinalBodyRot; // 최종 적용 차체 회전
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FinalValue") TArray<FVector> FinalWheelsLoc; // 최종 적용 휠 위치
@@ -79,10 +82,12 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "CalcState") USkeletalMeshComponent* OwnerSkeletalMeshComp; // 차량 본 정보 취득을 위한 스켈레탈 메시
 	UPROPERTY(VisibleAnywhere, Category = "CalcState") UFloatingPawnMovement* OwnerPawnMovement; // 차량 속도 제어를 위한 Pawn Movement
 
-	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") FVector CurrentVelocity; // 현재 속도
-	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") float CurrentSpeed; // 현재 속력 (cm/s)
-	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") float PrevSpeed; // 직전 속력 (cm/s)
-	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") float CurrentSpeedPitch = 0.f; // 속도 연산의 Pitch 계수
+	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") FVector CurrentVelocity; // 현재 속도 (cm/s)
+	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") FVector PrevVelocity; // 직전 속도 (cm/s)
+	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") float ImpactPitchVelocity = 0.f; // 충격 Pitch 속도
+	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") float ImpactRollVelocity = 0.f; // 충격 Roll 속도
+	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") float ImpactPitch = 0.f; // 충격 누적 Pitch
+	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") float ImpactRoll = 0.f; // 충격 누적 Roll
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") float GravityVelocity = 0.f; // 중력 연산용 하강속도 (cm/s)
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") float SuspensionForceSum = 0.f; // 서스펜션 상승 압력 계
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") TArray<FVector> GroundHitPoint; // SphereTrace 접지점 저장
@@ -102,7 +107,7 @@ public:
 	UFUNCTION(BlueprintCallable) void CalcSuspensionForce(int WheelIdx, float DeltaTime); // 서스펜션 힘 연산(위로 미는 방향)
 	UFUNCTION(BlueprintCallable) void SphereTraceGround(int WheelIdx); // 바퀴 지면 트레이스 - 바퀴 위치 확인
 	UFUNCTION(BlueprintCallable) void CalcVelocity(float DeltaTime); // 속도 연산
-	UFUNCTION(BlueprintCallable) void ImpactEvent(); // 충격 이벤트
+	UFUNCTION(BlueprintCallable) void ApplyImpact(FVector ImpactForce); // 충격 계산 - 속도에도 적용함(관성을 충격으로 봄)
 	UFUNCTION(BlueprintCallable) void ApplyPosture(float DeltaTime); // 최종 자세 적용
 
 

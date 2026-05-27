@@ -256,13 +256,24 @@ void UVehicleDynamicsComponent::CalcVelocity(float DeltaTime)
     OwnerPawnMovement->MaxSpeed = TempCalcMaxSpeed;
     OwnerPawnMovement->Acceleration = TempCalcAcceleration;
 
-    PrevSpeed = CurrentSpeed; // 이전 속도 저장
-    CurrentSpeed = OwnerPawnMovement->Velocity.Size(); // 현재 속도 저장
+    PrevVelocity = CurrentVelocity; // 이전 속도 저장 (관성 계산)
+    CurrentVelocity = OwnerPawnMovement->Velocity; // 현재 속도 저장 (관성 계산)
 }
 
-void UVehicleDynamicsComponent::ImpactEvent()
+void UVehicleDynamicsComponent::ApplyImpact(FVector ImpactForce)
 {
+    FVector LocalForce = OwnerSkeletalMeshComp->GetComponentTransform().InverseTransformVector(ImpactForce);
 
+    ImpactPitchVelocity += -LocalForce.X * ImpactInputScale;
+    ImpactRollVelocity += -LocalForce.Y * ImpactInputScale;
+
+    float DeltaTime = GetWorld()->GetDeltaSeconds();
+
+    ImpactPitchVelocity += (-ImpactPitchVelocity * ImpactDamping - ImpactPitch * ImpactStiffness) * DeltaTime;
+    ImpactRollVelocity += (-ImpactRollVelocity * ImpactDamping - ImpactRoll * ImpactStiffness) * DeltaTime;
+
+    ImpactPitch += ImpactPitchVelocity * DeltaTime;
+    ImpactRoll += ImpactRollVelocity * DeltaTime;
 }
 
 void UVehicleDynamicsComponent::ApplyPosture(float DeltaTime)
@@ -270,7 +281,7 @@ void UVehicleDynamicsComponent::ApplyPosture(float DeltaTime)
     float RollMoment = 0.f;
     float PitchMoment = 0.f;
     float TotalForce = 0.f;
-    float SpeedDelta = CurrentSpeed - PrevSpeed; // 양수 = 가속, 음수 = 감속 - 속도에 따른 Pitch변화 연산
+    FVector VelocityDelta = CurrentVelocity - PrevVelocity; // 관성 계산용 속도 연산값
 
     //1. 바퀴 연산
     for (int32 i = 0; i < WheelOffset.Num(); i++)
@@ -291,28 +302,26 @@ void UVehicleDynamicsComponent::ApplyPosture(float DeltaTime)
 
     if (TotalForce == 0.f) return;
 
-    //2. 속도에 따른 차체 관성 연산
-    float SpeedPitch = - SpeedDelta * ( PostureScale * 0.1f ); // 속도에 의한 관성은 너무 과하지 않도록 스케일 조정
-    if (SpeedPitch > MaxPitchAngle) SpeedPitch = MaxPitchAngle; // 최대 흔들림 값이 넘을 경우 보간
-    CurrentSpeedPitch = FMath::FInterpTo(CurrentSpeedPitch, SpeedPitch, DeltaTime, 1.f); // 차체 떨림 시간 보간
-    // 모멘트 → 각도 변환
+    // 바퀴 기반의 차체 움직임 연산 ===========================================================
     float NormalizedPitch = PitchMoment / (TotalForce * PostureScale);
     float NormalizedRoll = RollMoment / (TotalForce * PostureScale);
 
     float TargetPitch = FMath::RadiansToDegrees(FMath::Atan(NormalizedPitch));
     float TargetRoll = FMath::RadiansToDegrees(FMath::Atan(NormalizedRoll));
 
-    TargetPitch += CurrentSpeedPitch; // 최종 Pitch에 속도 관성 추가
-
-    // 보간으로 부드럽게
-    FinalBodyRot.Pitch = FMath::FInterpTo(FinalBodyRot.Pitch, TargetPitch, DeltaTime, BodySmoothing);
+    FinalBodyRot.Pitch = FMath::FInterpTo(FinalBodyRot.Pitch, TargetPitch, DeltaTime, BodySmoothing); // 부드럽게 움직이도록 보간
     FinalBodyRot.Roll = FMath::FInterpTo(FinalBodyRot.Roll, -TargetRoll, DeltaTime, BodySmoothing);
 
+    // 속도 관성 기반의 차체 움직임 연산 =======================================================
+
+    ApplyImpact(VelocityDelta); // 속도 변화량을 통한 충격힘 -> 관성력으로 본 계산
+
+    // 차체 움직임 합 적용 =====================================================================
     AActor* Owner = GetOwner();
     if (Owner)
     {
         FRotator CurrentRot = Owner->GetActorRotation();
-        FRotator TargetRot = FRotator(FinalBodyRot.Pitch, CurrentRot.Yaw, FinalBodyRot.Roll);
+        FRotator TargetRot = FRotator(FinalBodyRot.Pitch + ImpactPitch, CurrentRot.Yaw, FinalBodyRot.Roll + ImpactRoll);
         Owner->SetActorRotation(TargetRot);
     }
 

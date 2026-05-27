@@ -20,7 +20,7 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 #define FID_CustomPluginsProject_Plugins_VehicleDynamicsPlugin_Source_VehicleDynamicsPlugin_Public_VehicleDynamicsComponent_h_14_RPC_WRAPPERS_NO_PURE_DECLS \
  \
 	DECLARE_FUNCTION(execApplyPosture); \
-	DECLARE_FUNCTION(execImpactEvent); \
+	DECLARE_FUNCTION(execApplyImpact); \
 	DECLARE_FUNCTION(execCalcVelocity); \
 	DECLARE_FUNCTION(execSphereTraceGround); \
 	DECLARE_FUNCTION(execCalcSuspensionForce); \
