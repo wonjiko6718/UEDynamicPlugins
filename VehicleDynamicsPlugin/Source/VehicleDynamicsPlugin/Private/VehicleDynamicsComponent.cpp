@@ -197,10 +197,11 @@ void UVehicleDynamicsComponent::SphereTraceGround(int WheelIdx)
     // 로컬 → 월드 변환
     FTransform CompTransform = OwnerSkeletalMeshComp->GetComponentTransform();
     FVector WorldWheelPos = CompTransform.TransformPosition(WheelOffset[WheelIdx]);
+    FVector DownDir = -GetOwner()->GetActorUpVector();
 
     // 바퀴 중심에서 아래 방향으로 서스펜션 최대 길이만큼 트레이스, 기본 스켈레탈 위치는 거의 서스펜션 최대 길이이므로 바퀴 반경만큼 제외한 지점에서 시작
-    FVector SweepStart = WorldWheelPos + FVector(0.f, 0.f, WheelRadius);
-    FVector SweepEnd = SweepStart - FVector(0.f, 0.f, SpringMaxExtension);
+    FVector SweepStart = WorldWheelPos + (-DownDir * WheelRadius);
+    FVector SweepEnd = SweepStart + (DownDir * SpringMaxExtension);
 
     FHitResult Hit;
     FCollisionQueryParams Params;
