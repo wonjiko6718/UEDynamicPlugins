@@ -247,6 +247,11 @@ void UVehicleDynamicsComponent::CalcVelocity(float DeltaTime)
 
     float TempCalcMaxSpeed = BaseMaxSpeed; // 최종 적용을 위한 임시 최대속도 변수
     float TempCalcAcceleration = BaseAcceleration; // 최종 적용을 위한 임시 가속도 변수
+    float TempPitchNormalize = CurrentBodyRotation.Pitch / MaxClimbingAngle; // 등판각 정규화
+
+    DragCoeff = 0.0f; // 저항계수 초기화
+    DragCoeff += TempPitchNormalize; // 등판각 기반의 저항 추가
+    DragCoeff -= Surfacefriction; // 표면 마찰 추가
 
     //0. 준비 과정에서 가속 비율 적용
     TempCalcAcceleration *= AccelRate;

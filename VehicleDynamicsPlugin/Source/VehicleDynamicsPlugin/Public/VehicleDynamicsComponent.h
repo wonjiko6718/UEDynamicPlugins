@@ -28,6 +28,9 @@ public:
 	//Calc Setting Param
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float AccelRate = 1.f; // 가속 계수 (배율)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float BrakeRate = 1.f; // 제동 계수 (배율)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float MaxClimbingAngle = 45.f; // 최대 등판각도(각)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float Surfacefriction = 0.1f; //  표면마찰 계수
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VelocityParam") float DragCoeff = 0.0f; // 저항 총합(배율) 0 ~ 1
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") int32 SelectedGearNum = 0; // 선택된 기어 주소 - 기본값 : 첫번째 인자
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") TArray<float> GearMaxSpeedArray; // 기어별 최대 속도 배열(cm/s)
@@ -36,7 +39,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VelocityParam") float BaseMaxSpeed = 0.f; // 기어별 기준 최대속도(cm/s)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VelocityParam") float BaseAcceleration = 0.f; // 기어별 기준 가속도(cm/s)
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float DragCoeff = 0.1f; // 공기,노면 저항 상수(배율) 0 ~ 1
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float GravityForceCoeff = 980.f; // 중력가속도 상수 9.8 (cm/s^2)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float EnergyLossRate = 0.95f; // 중력 힘 감쇠 (배열)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") int32 CalcInterval = 30; // 프레임 최적화를 위한 연산 주기 (fps)
