@@ -37,7 +37,20 @@ private: \
 	friend struct Z_Construct_UClass_UVehicleDynamicsComponent_Statics; \
 public: \
 	DECLARE_CLASS(UVehicleDynamicsComponent, UActorComponent, COMPILED_IN_FLAGS(0 | CLASS_Config), CASTCLASS_None, TEXT("/Script/VehicleDynamicsPlugin"), NO_API) \
-	DECLARE_SERIALIZER(UVehicleDynamicsComponent)
+	DECLARE_SERIALIZER(UVehicleDynamicsComponent) \
+	enum class ENetFields_Private : uint16 \
+	{ \
+		NETFIELD_REP_START=(uint16)((int32)Super::ENetFields_Private::NETFIELD_REP_END + (int32)1), \
+		SelectedGearNum=NETFIELD_REP_START, \
+		FinalBodyLoc, \
+		FinalBodyRot, \
+		FinalWheelsLoc, \
+		FinalGroundedLoc, \
+		ThrottleAxis, \
+		SteeringAxis, \
+		GeerNum, \
+		NETFIELD_REP_END=GeerNum	}; \
+	NO_API virtual void ValidateGeneratedRepEnums(const TArray<struct FRepRecord>& ClassReps) const override;
 
 
 #define FID_CustomPluginsProject_Plugins_VehicleDynamicsPlugin_Source_VehicleDynamicsPlugin_Public_VehicleDynamicsComponent_h_14_ENHANCED_CONSTRUCTORS \

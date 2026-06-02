@@ -24,6 +24,7 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; // 서버 복제 함수
 
 	//Calc Setting Param
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float AccelRate = 1.f; // 가속 계수 (배율)
@@ -32,7 +33,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float Surfacefriction = 0.1f; //  표면마찰 계수
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VelocityParam") float DragCoeff = 0.0f; // 저항 총합(배율) 0 ~ 1
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") int32 SelectedGearNum = 0; // 선택된 기어 주소 - 기본값 : 첫번째 인자
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") int32 SelectedGearNum = 0; // 선택된 기어 주소 - 기본값 : 첫번째 인자
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") TArray<float> GearMaxSpeedArray; // 기어별 최대 속도 배열(cm/s)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") TArray<float> GearAccelerationArray; // 기어별 가속도 배열(cm/s)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") TArray<int32> GearForwardArray; // 기어벌 전진, 후진, 회전여부 (0,1,2)
@@ -68,21 +69,24 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float ImpactDamping = 0.15f; // 충격 감쇠 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float ImpactInputScale = 0.15f; // 충격 입력 크기
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FinalValue") FRotator FinalBodyRot; // 최종 적용 차체 회전
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FinalValue") TArray<FVector> FinalWheelsLoc; // 최종 적용 휠 위치
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FinalValue") TArray<FVector> FinalGroundedLoc; // 최종 적용 접지 위치
 
-	UPROPERTY(VisibleAnywhere, Category = "Input") float ThrottleAxis; // 스로틀 인풋
-	UPROPERTY(VisibleAnywhere, Category = "Input") float SteeringAxis; // 조향 인풋
-	UPROPERTY(EditAnywhere, Category = "Input") int32 GeerNum; // 기어 인풋
+	//최종 함수는 서버 복제 실행
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") FVector FinalBodyLoc; // 최종 적용 차체 위치
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") FRotator FinalBodyRot; // 최종 적용 차체 회전
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") TArray<FVector> FinalWheelsLoc; // 최종 적용 휠 위치
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") TArray<FVector> FinalGroundedLoc; // 최종 적용 접지 위치
+
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "Input") float ThrottleAxis; // 스로틀 인풋
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "Input") float SteeringAxis; // 조향 인풋
+	UPROPERTY(Replicated, EditAnywhere, Category = "Input") int32 GeerNum; // 기어 인풋
 
 	UPROPERTY(EditAnywhere, Category = "Debug") bool bDrawTrace = true; // 레이트레이스 디버그 옵션
-
-private:
 
 	UPROPERTY(VisibleAnywhere, Category = "CalcState") FRotator CurrentBodyRotation; // 연산용 차체 회전 저장값
 	UPROPERTY(VisibleAnywhere, Category = "CalcState") USkeletalMeshComponent* OwnerSkeletalMeshComp; // 차량 본 정보 취득을 위한 스켈레탈 메시
 	UPROPERTY(VisibleAnywhere, Category = "CalcState") UFloatingPawnMovement* OwnerPawnMovement; // 차량 속도 제어를 위한 Pawn Movement
+
+private:
 
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") FVector CurrentVelocity; // 현재 속도 (cm/s)
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") FVector PrevVelocity; // 직전 속도 (cm/s)

@@ -212,6 +212,8 @@
             "d:\\ue_projects\\custompluginsproject\\plugins\\vehicledynamicsplugin\\intermediate\\build\\win64\\unrealeditor\\inc\\vehicledynamicsplugin\\uht\\vehicledynamicsplugin.init.gen.cpp",
             "d:\\ue_projects\\custompluginsproject\\plugins\\vehicledynamicsplugin\\source\\vehicledynamicsplugin\\private\\vehicledynamicsaniminstance.cpp",
             "d:\\ue_projects\\custompluginsproject\\plugins\\vehicledynamicsplugin\\source\\vehicledynamicsplugin\\private\\vehicledynamicscomponent.cpp",
+            "c:\\unrealengine-5.3.2-release\\engine\\source\\runtime\\engine\\public\\net\\unrealnetwork.h",
+            "c:\\unrealengine-5.3.2-release\\engine\\source\\runtime\\net\\core\\public\\net\\core\\propertyconditions\\propertyconditions.h",
             "d:\\ue_projects\\custompluginsproject\\plugins\\vehicledynamicsplugin\\source\\vehicledynamicsplugin\\private\\vehicledynamicsplugin.cpp",
             "d:\\ue_projects\\custompluginsproject\\plugins\\vehicledynamicsplugin\\source\\vehicledynamicsplugin\\public\\vehicledynamicsplugin.h"
         ],

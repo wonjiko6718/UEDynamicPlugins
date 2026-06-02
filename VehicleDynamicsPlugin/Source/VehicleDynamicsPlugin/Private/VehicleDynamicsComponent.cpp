@@ -2,12 +2,13 @@
 
 
 #include "VehicleDynamicsComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
 UVehicleDynamicsComponent::UVehicleDynamicsComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-
+    SetIsReplicatedByDefault(true);
 }
 
 void UVehicleDynamicsComponent::BeginPlay()
@@ -20,7 +21,21 @@ void UVehicleDynamicsComponent::BeginPlay()
 void UVehicleDynamicsComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    TickVehicle(DeltaTime);
+    if (GetOwner()->HasAuthority()) // 서버에서만 실행
+    {
+        TickVehicle(DeltaTime);
+    }
+}
+
+void UVehicleDynamicsComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const // 서버 복제 변수들
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(UVehicleDynamicsComponent, FinalBodyRot);
+    DOREPLIFETIME(UVehicleDynamicsComponent, FinalWheelsLoc);
+    DOREPLIFETIME(UVehicleDynamicsComponent, FinalGroundedLoc);
+    DOREPLIFETIME(UVehicleDynamicsComponent, ThrottleAxis);
+    DOREPLIFETIME(UVehicleDynamicsComponent, SteeringAxis);
+    DOREPLIFETIME(UVehicleDynamicsComponent, SelectedGearNum);
 }
 
 void UVehicleDynamicsComponent::BeginSetting()
@@ -159,7 +174,8 @@ void UVehicleDynamicsComponent::ApplyGravity(float DeltaTime)
     GravityVelocity *= FMath::Pow(1.f - EnergyLossRate, DeltaTime); // 에너지 손실률 적용
 
     CurrentLoc.Z += GravityVelocity * DeltaTime;
-    Owner->SetActorLocation(CurrentLoc, false);
+    FinalBodyLoc = CurrentLoc;
+    Owner->SetActorLocation(FinalBodyLoc, false); // 서버 충돌 시 주석처리
     if (Owner->GetActorLocation().Z == OldLocation.Z)
     {
         GravityVelocity = 0.f;
@@ -328,7 +344,7 @@ void UVehicleDynamicsComponent::ApplyPosture(float DeltaTime)
     {
         FRotator CurrentRot = Owner->GetActorRotation();
         FRotator TargetRot = FRotator(FinalBodyRot.Pitch + ImpactPitch, CurrentRot.Yaw, FinalBodyRot.Roll + ImpactRoll);
-        Owner->SetActorRotation(TargetRot);
+        Owner->SetActorRotation(TargetRot); // 서버 충돌 시 주석처리
     }
 
     FTransform CompTransform = OwnerSkeletalMeshComp->GetComponentTransform();
