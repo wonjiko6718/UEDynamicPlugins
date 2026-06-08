@@ -19,12 +19,13 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 #define FID_CustomPluginsProject_Plugins_VehicleDynamicsPlugin_Source_VehicleDynamicsPlugin_Public_VehicleDynamicsComponent_h_14_EDITOR_ONLY_SPARSE_DATA_PROPERTY_ACCESSORS
 #define FID_CustomPluginsProject_Plugins_VehicleDynamicsPlugin_Source_VehicleDynamicsPlugin_Public_VehicleDynamicsComponent_h_14_RPC_WRAPPERS_NO_PURE_DECLS \
  \
-	DECLARE_FUNCTION(execApplyPosture); \
-	DECLARE_FUNCTION(execApplyImpact); \
+	DECLARE_FUNCTION(execApplyFinalTransform); \
 	DECLARE_FUNCTION(execCalcVelocity); \
-	DECLARE_FUNCTION(execSphereTraceGround); \
+	DECLARE_FUNCTION(execCalcImpactForce); \
+	DECLARE_FUNCTION(execCalcDragForce); \
 	DECLARE_FUNCTION(execCalcSuspensionForce); \
-	DECLARE_FUNCTION(execApplyGravity); \
+	DECLARE_FUNCTION(execCalcGravityForce); \
+	DECLARE_FUNCTION(execSphereTraceGround); \
 	DECLARE_FUNCTION(execSelectGear); \
 	DECLARE_FUNCTION(execTickVehicle); \
 	DECLARE_FUNCTION(execBeginSetting);
@@ -42,6 +43,7 @@ public: \
 	{ \
 		NETFIELD_REP_START=(uint16)((int32)Super::ENetFields_Private::NETFIELD_REP_END + (int32)1), \
 		SelectedGearNum=NETFIELD_REP_START, \
+		FinalForce, \
 		FinalBodyLoc, \
 		FinalBodyRot, \
 		FinalWheelsLoc, \
