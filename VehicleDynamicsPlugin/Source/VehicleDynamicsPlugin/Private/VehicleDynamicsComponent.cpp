@@ -15,6 +15,7 @@ void UVehicleDynamicsComponent::BeginPlay()
 {
 	Super::BeginPlay();
     BeginSetting();
+    OwnerPawnMovement->Deactivate();
 	
 }
 
@@ -34,8 +35,8 @@ void UVehicleDynamicsComponent::GetLifetimeReplicatedProps(TArray<FLifetimePrope
     DOREPLIFETIME(UVehicleDynamicsComponent, FinalBodyRot);
     DOREPLIFETIME(UVehicleDynamicsComponent, FinalWheelsLoc);
     DOREPLIFETIME(UVehicleDynamicsComponent, FinalGroundedLoc);
-    DOREPLIFETIME(UVehicleDynamicsComponent, ThrottleAxis);
-    DOREPLIFETIME(UVehicleDynamicsComponent, SteeringAxis);
+    DOREPLIFETIME(UVehicleDynamicsComponent, ThrottleInput);
+    DOREPLIFETIME(UVehicleDynamicsComponent, SteeringInput);
     DOREPLIFETIME(UVehicleDynamicsComponent, SelectedGearNum);
 }
 
@@ -111,6 +112,12 @@ void UVehicleDynamicsComponent::BeginSetting()
             FVector WheelData = OwnerSkeletalMeshComp->SkeletalMesh->GetRefSkeleton().GetRefBonePose()[i].GetLocation();
             WheelBaseOffset.Add(WheelData);
 
+            //휠 연산용 값 저장
+            if (WheelData.X > WheelMaxOffsetX) WheelMaxOffsetX = WheelData.X; // 정규화용 바퀴 최대거리 저장
+            if (WheelData.X > WheelMaxOffsetY) WheelMaxOffsetY = WheelData.Y; // 정규화용 바퀴 최대거리 저장
+            WheelCenterOffsetX += WheelData.X; // 우선 연산 전, 모두 더함
+            WheelCenterOffsetY += WheelData.Y; // 우선 연산 전, 모두 더함
+
             //배열의 개수에 맞춰 나머지 연산배열 길이 맞추기
             SuspensionCompression.Add(0); // 서스펜션 압축량
             PrevSuspensionCompression.Add(0); // 서스펜션 이전 프레임 압축량
@@ -124,6 +131,10 @@ void UVehicleDynamicsComponent::BeginSetting()
             UE_LOG(LogTemp, Error, TEXT("Wheel Bone NOT FOUND for %s"), *S);
         }
     }
+    // 바퀴 중심 위치 연산 수행 후 저장
+    WheelCenterOffsetX = WheelCenterOffsetX / WheelBonesArray.Num();
+    WheelCenterOffsetY = WheelCenterOffsetY / WheelBonesArray.Num();
+
     // 첫 프레임 트레이스로 초기 압축량 미리 계산 - 값 튐 방지
     for (int i = 0; i < WheelBonesArray.Num(); i++)
     {
@@ -135,13 +146,17 @@ void UVehicleDynamicsComponent::BeginSetting()
 void UVehicleDynamicsComponent::TickVehicle(float DeltaTime)
 {
     FinalForce = FVector::ZeroVector; //최종 힘 초기화
+    SuspensionPitchForce = 0.f; // 계산식 초기화
+    SuspensionRollForce = 0.f; // 계산식 초기화
 
-    for (int i = 0; i < WheelBonesArray.Num(); i++) SphereTraceGround(i);
-    CalcGravityForce(DeltaTime);
-    for (int i = 0; i < WheelBonesArray.Num(); i++) CalcSuspensionForce(i, DeltaTime);
-
-    CalcVelocity(DeltaTime);
-    ApplyFinalTransform(DeltaTime);
+    for (int i = 0; i < WheelBonesArray.Num(); i++) SphereTraceGround(i); // 바퀴 접지
+    CalcGravityForce(DeltaTime); // 중력 연산
+    for (int i = 0; i < WheelBonesArray.Num(); i++) CalcSuspensionForce(i, DeltaTime); // 서스펜션 연산
+    CalcDriveForce(DeltaTime);  // 주행 힘 연산
+    CalcDragForce(DeltaTime);  // 마찰저항 힘계산
+    CalcInertiaForce(DeltaTime); // 관성 힘계산
+    CalcVelocity(DeltaTime); // 최종 속도 계산
+    ApplyFinalTransform(DeltaTime); // 차체 위치 및 움직임 업데이트
 }
 
 void UVehicleDynamicsComponent::SelectGear(int32 SelectNum)
@@ -157,6 +172,30 @@ void UVehicleDynamicsComponent::SelectGear(int32 SelectNum)
         BaseAcceleration = GearAccelerationArray[SelectedGearNum]; // 기준 가속도 - 최종 적용은 CalVelocity 에서
     }
 }
+void UVehicleDynamicsComponent::CallThrotlle(float InputAxis)
+{
+    ThrottleInput = FMath::Clamp(InputAxis, -1.f, 1.f);
+}
+void UVehicleDynamicsComponent::CallSteering(float InputAxis)
+{
+    SteeringInput = FMath::Clamp(InputAxis, -1.f, 1.f);
+    GetOwner()->AddActorWorldRotation(FRotator(0.f, SteeringInput, 0.f));
+
+}
+void UVehicleDynamicsComponent::CalcDriveForce(float DeltaTime)
+{
+    if (FMath::IsNearlyZero(ThrottleInput)) return;
+    int32 GroundedCount = 0;
+    for (int i = 0; i < WheelBonesArray.Num(); i++)
+        if (bWheelGrounded[i]) GroundedCount++;
+    if (GroundedCount == 0) return;
+
+    float GroundedRatio = FMath::Sqrt((float)GroundedCount / (float)WheelBonesArray.Num()); // 접지 비율, 미는 힘 보정
+    FVector ForwardDir = GetOwner()->GetActorForwardVector();
+    CurrentTargetSpeed = FMath::FInterpTo(CurrentTargetSpeed, BaseMaxSpeed, DeltaTime, BaseAcceleration / BaseMaxSpeed);
+    float TestPower = CurrentTargetSpeed * TotalMass;
+    FinalForce += ForwardDir * ThrottleInput * TestPower * GroundedRatio;
+}
 void UVehicleDynamicsComponent::CalcGravityForce(float DeltaTime)
 {
     FVector Gravityforce = FVector::ZeroVector;
@@ -168,6 +207,8 @@ void UVehicleDynamicsComponent::CalcGravityForce(float DeltaTime)
 void UVehicleDynamicsComponent::CalcSuspensionForce(int WheelIdx, float DeltaTime)
 {
     if (!bWheelGrounded[WheelIdx]){ return; } // 미접지 시 서스펜션 힘 연산하지 않음
+
+    // 기본 서스펜션 상승힘 연산 ========================================================================================
 
     float Compression = SuspensionCompression[WheelIdx]; // 1. 압축량을 가져와
     float SpringForce = SpringStiffness * Compression; // 2. 스프링의 상승힘을 구해놓는다.
@@ -184,30 +225,67 @@ void UVehicleDynamicsComponent::CalcSuspensionForce(int WheelIdx, float DeltaTim
 
     PrevSuspensionCompression[WheelIdx] = Compression; // 다음 프레임용 저장
 
-    // 연산 결과를 최종 힘에 반영 ========================================================================================
+    // 서스펜션 상승힘을 통한 Pitch, Roll 연산============================================================================
     
-    // 기본 상승 힘 (중력에 대응하는 상승 힘)
-    //FinalForce += UpDir * SpringForce; // 스프링 상승힘 총합을 더함
+    // Pitch를 위한 X 연산
 
-    ////서스펜션 댐핑 상승힘 누적
-    //FinalForce += UpDir * DamperForce;
-    FinalForce += UpDir * (SpringForce + DamperForce);
+    float DistanceAffect = (WheelLocalPos.X - WheelCenterOffsetX) / WheelMaxOffsetX; // 가장 먼 바퀴 기준의 정규화, 가까운 바퀴일수록 힘을 적게 받음(-1~1, 전/후)
+    float PitchForce = DistanceAffect * SpringForce; // 서스펜션 상승힘에 힘 더함
+    SuspensionPitchForce += PitchForce / SpringStiffness; // 단위 조절을 위해 스프링 강도만큼 나눈 값을 사용함
 
+    // Roll을 위한 Y 연산
+    DistanceAffect = (WheelLocalPos.Y - WheelCenterOffsetY) / WheelMaxOffsetY; // 가장 먼 바퀴 기준의 정규화, 가까운 바퀴일수록 힘을 적게 받음(-1~1, 전/후)
+    float Rollforce = DistanceAffect * SpringForce; // 서스펜션 상승힘에 힘 더함
+    SuspensionRollForce += Rollforce / SpringStiffness; // 단위 조절을 위해 스프링 강도만큼 나눈 값을 사용함
 
-    UE_LOG(LogTemp, Log, TEXT("Wheel[%d] Grounded: %d | Compression: %.2f | SpringForce: %.1f | DamperForce: %.1f"), WheelIdx, bWheelGrounded[WheelIdx], Compression, SpringForce, DamperForce);
-    //// 앞,뒤 거리를 통해 Pitch에 기여하는 힘 구함
-    //float PitchContrib = WheelLocalPos.X * SpringForce;
-    //FinalForce += ForwardDir * PitchContrib * BodyRotateScale; // 차체 Pitch 힘 추가
+    // 연산 결과를 최종 힘에 반영 ========================================================================================
 
-    //// 좌,우 거리를 통해 Roll에 기여하는 힘 구함
-    //float RollContrib = WheelLocalPos.Y * SpringForce;
-    //FinalForce += RightDir * RollContrib * BodyRotateScale; // 차체 Roll힘 추가
+    FinalForce += UpDir * (SpringForce + DamperForce); // 차체의 Z축 움직임
+
 }
 void UVehicleDynamicsComponent::CalcDragForce(float DeltaTime)
 {
+    // 접지 바퀴 수 계산
+    int32 GroundedCount = 0;
+    for (int i = 0; i < WheelBonesArray.Num(); i++)
+        if (bWheelGrounded[i]) GroundedCount++;
 
+    if (GroundedCount == 0) return; //미접지시 저항 계산하지 않음
+
+    // 접지 비율
+    float GroundedRatio = FMath::Sqrt((float)GroundedCount / (float)WheelBonesArray.Num());
+
+    FVector HorizontalVelocity = FVector(CurrentVelocity.X, CurrentVelocity.Y, 0.f);
+    if (HorizontalVelocity.IsNearlyZero()) return;
+
+    FVector ForwardDir = GetOwner()->GetActorForwardVector();
+    float ForwardSpeed = FVector::DotProduct(HorizontalVelocity, ForwardDir);
+    FinalForce += -ForwardDir * ForwardSpeed * ForwardDrag * TotalMass;
+
+    FVector RightDir = GetOwner()->GetActorRightVector();
+    float LateralSpeed = FVector::DotProduct(HorizontalVelocity, RightDir);
+    FinalForce += -RightDir * LateralSpeed * LateralDrag * TotalMass * GroundedRatio;
 }
-void UVehicleDynamicsComponent::CalcImpactForce(float DeltaTime)
+void UVehicleDynamicsComponent::CalcInertiaForce(float DeltaTime)
+{
+    FVector ForwardDir = GetOwner()->GetActorForwardVector();
+    FVector RightDir = GetOwner()->GetActorRightVector();
+
+    // 차량 기준 전진/횡방향 속도만 추출
+    float CurrentForwardSpeed = FVector::DotProduct(CurrentVelocity, ForwardDir);
+    float CurrentLateralSpeed = FVector::DotProduct(CurrentVelocity, RightDir);
+
+    float PrevForwardSpeed = FVector::DotProduct(PrevVelocity, ForwardDir);
+    float PrevLateralSpeed = FVector::DotProduct(PrevVelocity, RightDir);
+
+    // 속도 변화량 → 관성
+    float ForwardAccel = (CurrentForwardSpeed - PrevForwardSpeed) / DeltaTime;
+    float LateralAccel = (CurrentLateralSpeed - PrevLateralSpeed) / DeltaTime;
+
+    InertiaPitchForce = -ForwardAccel * BodyRotateScale;
+    InertiaRollForce = -LateralAccel* BodyRotateScale;
+}
+void UVehicleDynamicsComponent::CalcImpactForce(FVector ImpactPoint)
 {
 
 }
@@ -234,7 +312,10 @@ void UVehicleDynamicsComponent::SphereTraceGround(int WheelIdx)
 
     // 바퀴 중심에서 아래 방향으로 서스펜션 유후 길이만큼 트레이스,(잡아 늘려서 닿지는 않으므로)
     // 기본 스켈레탈 위치는 거의 서스펜션 최대 길이이므로 바퀴 반경만큼 제외한 지점에서 시작
-    FVector SweepStart = AdjustedWheelPos;
+    FVector WheelLocalXY = FVector(WheelBaseOffset[WheelIdx].X, WheelBaseOffset[WheelIdx].Y, 0.f);
+    FVector WheelWorldXY = GetOwner()->GetActorTransform().TransformVector(WheelLocalXY);
+
+    FVector SweepStart = BoxBottom + WheelWorldXY;
     FVector SweepEnd = SweepStart + (DownDir * RestLength);
 
     FHitResult Hit;
@@ -284,16 +365,33 @@ void UVehicleDynamicsComponent::CalcVelocity(float DeltaTime)
     CurrentVelocity += Acceleration * DeltaTime; // 최종 속도 구함
 
     // 디버그
-    UE_LOG(LogTemp, Log, TEXT("FinalForce Z: %.1f | Acceleration Z: %.4f | Velocity Z: %.4f"), FinalForce.Z, Acceleration.Z, CurrentVelocity.Z);
+    UE_LOG(LogTemp, Log, TEXT("CurrentVelocity : %.4f "), CurrentVelocity.Size());
 
 }
 
 void UVehicleDynamicsComponent::ApplyFinalTransform(float DeltaTime)
 {
     FVector NewLocation = GetOwner()->GetActorLocation() + CurrentVelocity * DeltaTime;
-    GetOwner()->SetActorLocation(NewLocation, true);
-    //최종 적용 변수 저장
-    FinalBodyLoc = GetOwner()->GetActorLocation();
-    FinalBodyRot = GetOwner()->GetActorRotation();
+
+    // 목표 Pitch/Roll 계산
+    float TargetPitch = SuspensionPitchForce * BodyRotateScale;
+    float TargetRoll = -(SuspensionRollForce * BodyRotateScale);
+
+    // 데드존 적용
+    if (FMath::Abs(TargetPitch) < 0.5f) TargetPitch = 0.f;
+    if (FMath::Abs(TargetRoll) < 0.5f) TargetRoll = 0.f;
+
+    // 현재 회전에서 보간
+    FRotator CurrentRot = GetOwner()->GetActorRotation();
+    float NewPitch = FMath::FInterpTo(CurrentRot.Pitch, TargetPitch, DeltaTime, RotateInterpSpeed);
+    float NewRoll = FMath::FInterpTo(CurrentRot.Roll, TargetRoll, DeltaTime, RotateInterpSpeed);
+
+    // 최종 반환값 저장
+    FinalBodyLoc = NewLocation;
+    FinalBodyRot = FRotator(NewPitch, CurrentRot.Yaw, NewRoll);
+
+    // 최종 차체 적용 ===============================================================
+    GetOwner()->SetActorLocation(FinalBodyLoc, true);
+    GetOwner()->SetActorRotation(FinalBodyRot);
 
 }

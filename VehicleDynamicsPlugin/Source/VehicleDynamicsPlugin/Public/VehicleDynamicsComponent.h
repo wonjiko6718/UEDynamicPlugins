@@ -31,7 +31,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float BrakeRate = 1.f; // 제동 계수 (배율)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float MaxClimbingAngle = 45.f; // 최대 등판각도(각)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float Surfacefriction = 0.1f; //  표면마찰 계수
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VelocityParam") float DragCoeff = 0.0f; // 저항 총합(배율) 0 ~ 1
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float ForwardDrag = 25.f;   // 전진방향 마찰저항
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float LateralDrag = 50.f;  // 횡방향 마찰저항
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") int32 SelectedGearNum = 0; // 선택된 기어 주소 - 기본값 : 첫번째 인자
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") TArray<float> GearMaxSpeedArray; // 기어별 최대 속도 배열(cm/s)
@@ -47,34 +49,46 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly,Category = "Wheel") TArray<FName> WheelBonesArray; // 배열 매칭용 차량 바퀴 본
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wheel") TArray<FName> TrackBonesArray; // 배열 매칭용 차량 바퀴 본
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wheel") TArray<FVector> WheelBaseOffset; // 로컬 바퀴 상대위치(기본 위치)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wheel") TArray<FVector> WheelBaseOffset; // 로컬 바퀴 상대위치(기본 위치)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wheel") float WheelMaxOffsetX = 0; // Pitch 정규화용 최대 바퀴거리
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wheel") float WheelMaxOffsetY = 0; // Roll 정규화용 최대 바퀴거리
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wheel") float WheelCenterOffsetX = 0; // Pitch 정규화용 바퀴 중심거리
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wheel") float WheelCenterOffsetY = 0; // Roll 정규화용 바퀴 중심거리
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wheel") float WheelRadius; // 바퀴 반경(구) - SphereTrace로 접지 위치 계산
 
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Suspension") float SpringMaxExtension = 30; // 최대 서스펜션 높이 (cm)
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Suspension") float SpringMinExtension = 5; // 최소 서스펜션 높이 (cm)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Suspension") float SpringStiffness; // 스프링 강도
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Suspension") float DamperStiffness; // 댐핑 상수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Suspension") float RestLength = 17.5; // 휴지 길이 (cm)
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float TotalMass = 54500.0f; // 차체 전체 질량(kg)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") UBoxComponent* BodyBox; // 차체 중심 박스 컴포넌트
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float BodyRotateScale = 1.0f; // 차체 회전 크기(배율)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float BodyRotateScale = 0.1f; // 차체 회전 크기(배율)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float RotateInterpSpeed = 2.f; // 차체 회전 속도
 
 	//최종 함수는 서버 복제 실행
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") FVector FinalForce; // 최종 적용 힘 크기 및 방향
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") FVector FinalBodyLoc; // 최종 적용 차체 위치
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") FRotator FinalBodyRot; // 최종 적용 차체 회전
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") FVector FinalBodyLoc; // 최종 적용 차체 위치 (힘 기반의 속력)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") FRotator FinalBodyRot; // 최종 적용 차체 회전 (힘 기반의 방향)
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") TArray<FVector> FinalWheelsLoc; // 최종 적용 휠 위치
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") TArray<FVector> FinalGroundedLoc; // 최종 적용 접지 위치(트랙에 사용)
 
-	UPROPERTY(Replicated, VisibleAnywhere, Category = "Input") float ThrottleAxis; // 스로틀 인풋
-	UPROPERTY(Replicated, VisibleAnywhere, Category = "Input") float SteeringAxis; // 조향 인풋
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "Input") float ThrottleInput; // 스로틀 인풋
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "Input") float SteeringInput; // 조향 인풋
 	UPROPERTY(Replicated, EditAnywhere, Category = "Input") int32 GeerNum; // 기어 인풋
 
 	UPROPERTY(EditAnywhere, Category = "Debug") bool bDrawTrace = true; // 레이트레이스 디버그 옵션
+	UPROPERTY(EditAnywhere, Category = "Debug") float InputScale = 150; // 인풋 테스트 디버그 옵션
 
 	UPROPERTY(VisibleAnywhere, Category = "CalcState") FRotator CurrentBodyRotation; // 연산용 차체 회전 저장값
+
+	UPROPERTY(VisibleAnywhere, Category = "CalcState") float SuspensionPitchForce; // 서스펜션에 반영하기 위한 Pitch 힘
+	UPROPERTY(VisibleAnywhere, Category = "CalcState") float SuspensionRollForce; // 서스펜션에 반영하기 위한 Roll 힘
+
+	UPROPERTY(VisibleAnywhere, Category = "CalcState") float InertiaPitchForce; // 관성에 의한 Pitch 힘
+	UPROPERTY(VisibleAnywhere, Category = "CalcState") float InertiaRollForce; // 관성에 의한 Roll 힘
+
 	UPROPERTY(VisibleAnywhere, Category = "CalcState") USkeletalMeshComponent* OwnerSkeletalMeshComp; // 차량 본 정보 취득을 위한 스켈레탈 메시
 	UPROPERTY(VisibleAnywhere, Category = "CalcState") UFloatingPawnMovement* OwnerPawnMovement; // 차량 속도 제어를 위한 Pawn Movement
 
@@ -82,6 +96,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") FVector CurrentVelocity; // 현재 속도 (cm/s)
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") FVector PrevVelocity; // 직전 속도 (cm/s)
+	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") float CurrentTargetSpeed = 0.f; // 전진힘 계산용 목표속도
 
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") TArray<FVector> GroundHitPoint; // SphereTrace 접지점 저장
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") TArray<float> SuspensionCompression; // 서스펜션 압축량(cm)
@@ -95,15 +110,19 @@ public:
 
 	//Event Functions
 	UFUNCTION(BlueprintCallable) void SelectGear(int32 SelectNum);
+	UFUNCTION(BlueprintCallable) void CallThrotlle(float InputAxis);
+	UFUNCTION(BlueprintCallable) void CallSteering(float InputAxis);
 
 	//Calc Functions
 	UFUNCTION(BlueprintCallable) void SphereTraceGround(int WheelIdx); // 바퀴 지면 트레이스 - 바퀴 위치 확인
 
 	//Force Calc
+	UFUNCTION(BlueprintCallable) void CalcDriveForce(float DeltaTime); // 주행 힘 연산(앞으로 미는 힘)
 	UFUNCTION(BlueprintCallable) void CalcGravityForce(float DeltaTime); // 중력 연산(아래로 미는 힘)
 	UFUNCTION(BlueprintCallable) void CalcSuspensionForce(int WheelIdx, float DeltaTime); // 서스펜션 힘 연산(위로 미는 방향)
 	UFUNCTION(BlueprintCallable) void CalcDragForce(float DeltaTime); // 저항 연산 - 노면 별 저항 등(일반적으로 차체 기준 뒤쪽 힘)
-	UFUNCTION(BlueprintCallable) void CalcImpactForce(float DeltaTime); // 충격 연산 - 관성, 차체 충격 등(외부에서 들어오는 힘)
+	UFUNCTION(BlueprintCallable) void CalcInertiaForce(float DeltaTime); // 관성 연산
+	UFUNCTION(BlueprintCallable) void CalcImpactForce(FVector ImpactPoint); // 충격 연산 - 차체 충격 등(외부에서 들어오는 힘)
 
 	//Final Calc
 	UFUNCTION(BlueprintCallable) void CalcVelocity(float DeltaTime); // 최종 속도 연산

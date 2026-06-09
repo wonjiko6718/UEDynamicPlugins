@@ -22,10 +22,14 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 	DECLARE_FUNCTION(execApplyFinalTransform); \
 	DECLARE_FUNCTION(execCalcVelocity); \
 	DECLARE_FUNCTION(execCalcImpactForce); \
+	DECLARE_FUNCTION(execCalcInertiaForce); \
 	DECLARE_FUNCTION(execCalcDragForce); \
 	DECLARE_FUNCTION(execCalcSuspensionForce); \
 	DECLARE_FUNCTION(execCalcGravityForce); \
+	DECLARE_FUNCTION(execCalcDriveForce); \
 	DECLARE_FUNCTION(execSphereTraceGround); \
+	DECLARE_FUNCTION(execCallSteering); \
+	DECLARE_FUNCTION(execCallThrotlle); \
 	DECLARE_FUNCTION(execSelectGear); \
 	DECLARE_FUNCTION(execTickVehicle); \
 	DECLARE_FUNCTION(execBeginSetting);
@@ -48,8 +52,8 @@ public: \
 		FinalBodyRot, \
 		FinalWheelsLoc, \
 		FinalGroundedLoc, \
-		ThrottleAxis, \
-		SteeringAxis, \
+		ThrottleInput, \
+		SteeringInput, \
 		GeerNum, \
 		NETFIELD_REP_END=GeerNum	}; \
 	NO_API virtual void ValidateGeneratedRepEnums(const TArray<struct FRepRecord>& ClassReps) const override;
