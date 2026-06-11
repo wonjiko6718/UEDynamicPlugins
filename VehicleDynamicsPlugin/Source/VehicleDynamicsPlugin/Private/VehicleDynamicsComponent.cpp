@@ -164,6 +164,7 @@ void UVehicleDynamicsComponent::TickVehicle(float DeltaTime)
     if (!bIsAIPossess)
     {
         CalcDriveForce(DeltaTime);  // 주행 힘 연산
+        if (FMath::IsNearlyZero(BrakeInput)) CalcBrakeForce(DeltaTime);  // 브레이크 힘 연산
         CalcDragForce(DeltaTime);  // 마찰저항 힘계산
         CalcInertiaForce(DeltaTime); // 관성 힘계산
         CalcVelocity(DeltaTime); // 최종 속도 계산
@@ -183,6 +184,10 @@ void UVehicleDynamicsComponent::SelectGear(int32 SelectNum)
     {
         BaseAcceleration = GearAccelerationArray[SelectedGearNum]; // 기준 가속도 - 최종 적용은 CalVelocity 에서
     }
+}
+void UVehicleDynamicsComponent::CallBrake_Implementation(float InputAxis)
+{
+    BrakeInput = FMath::Clamp(InputAxis, 0.f, 1.f);
 }
 void UVehicleDynamicsComponent::CallThrotlle_Implementation(float InputAxis)
 {
@@ -309,6 +314,29 @@ void UVehicleDynamicsComponent::CalcDragForce(float DeltaTime)
         ? (LateralSpeed / StopThreshold)
         : FMath::Sign(LateralSpeed);
     FinalForce += -RightDir * LateralScale * LateralDrag * TotalMass * Surfacefriction * GroundedRatio;
+}
+void UVehicleDynamicsComponent::CalcBrakeForce(float DeltaTime)
+{
+    if (FMath::IsNearlyZero(BrakeInput)) return;
+
+    int32 GroundedCount = 0;
+    for (int i = 0; i < WheelBonesArray.Num(); i++)
+        if (bWheelGrounded[i]) GroundedCount++;
+    if (GroundedCount == 0) return;
+
+    float GroundedRatio = (float)GroundedCount / (float)WheelBonesArray.Num();
+
+    FVector HorizontalVelocity = FVector(CurrentVelocity.X, CurrentVelocity.Y, 0.f);
+    float Speed = HorizontalVelocity.Size();
+
+    // 이미 거의 멈췄으면 제동 안 함 (역주행 방지)
+    if (Speed < 5.0f) return;
+
+    // 진행 방향 반대로 제동력
+    FVector BrakeDir = -HorizontalVelocity.GetSafeNormal();
+    float BrakeForce = BrakePower * TotalMass * BrakeInput;
+
+    FinalForce += BrakeDir * BrakeForce * GroundedRatio;
 }
 void UVehicleDynamicsComponent::CalcInertiaForce(float DeltaTime)
 {

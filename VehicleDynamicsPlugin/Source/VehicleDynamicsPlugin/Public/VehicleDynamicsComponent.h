@@ -34,6 +34,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float ForwardDrag = 3000.f;   // 전진방향 마찰저항
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float LateralDrag = 4500.f;  // 횡방향 마찰저항
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float BrakePower = 300.f;  // 브레이크 제동 힘
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") int32 SelectedGearNum = 0; // 선택된 기어 주소 - 기본값 : 첫번째 인자
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") TArray<float> GearMaxSpeedArray; // 기어별 최대 속도 배열(cm/s)
@@ -115,6 +116,8 @@ public:
 	UFUNCTION(BlueprintCallable) void SelectGear(int32 SelectNum);
 	UFUNCTION(Server, Reliable, BlueprintCallable) void CallThrotlle(float InputAxis);
 	UFUNCTION(Server, Reliable, BlueprintCallable) void CallSteering(float InputAxis);
+	UFUNCTION(Server, Reliable, BlueprintCallable) void CallBrake(float InputAxis);
+
 
 	//Calc Functions
 	UFUNCTION(BlueprintCallable) void SphereTraceGround(int WheelIdx); // 바퀴 지면 트레이스 - 바퀴 위치 확인
@@ -124,6 +127,7 @@ public:
 	UFUNCTION(BlueprintCallable) void CalcGravityForce(float DeltaTime); // 중력 연산(아래로 미는 힘)
 	UFUNCTION(BlueprintCallable) void CalcSuspensionForce(int WheelIdx, float DeltaTime); // 서스펜션 힘 연산(위로 미는 방향)
 	UFUNCTION(BlueprintCallable) void CalcDragForce(float DeltaTime); // 저항 연산 - 노면 별 저항 등(일반적으로 차체 기준 뒤쪽 힘)
+	UFUNCTION(BlueprintCallable) void CalcBrakeForce(float DeltaTime); // 브레이크 연산 - 속도 반대 방향 힘
 	UFUNCTION(BlueprintCallable) void CalcInertiaForce(float DeltaTime); // 관성 연산
 	UFUNCTION(BlueprintCallable) void CalcImpactForce(FVector ImpactPoint); // 충격 연산 - 차체 충격 등(외부에서 들어오는 힘)
 

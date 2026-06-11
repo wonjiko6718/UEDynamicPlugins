@@ -18,6 +18,7 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 #define FID_CustomPluginsProject_Plugins_VehicleDynamicsPlugin_Source_VehicleDynamicsPlugin_Public_VehicleDynamicsComponent_h_14_SPARSE_DATA_PROPERTY_ACCESSORS
 #define FID_CustomPluginsProject_Plugins_VehicleDynamicsPlugin_Source_VehicleDynamicsPlugin_Public_VehicleDynamicsComponent_h_14_EDITOR_ONLY_SPARSE_DATA_PROPERTY_ACCESSORS
 #define FID_CustomPluginsProject_Plugins_VehicleDynamicsPlugin_Source_VehicleDynamicsPlugin_Public_VehicleDynamicsComponent_h_14_RPC_WRAPPERS_NO_PURE_DECLS \
+	virtual void CallBrake_Implementation(float InputAxis); \
 	virtual void CallSteering_Implementation(float InputAxis); \
 	virtual void CallThrotlle_Implementation(float InputAxis); \
  \
@@ -26,11 +27,13 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 	DECLARE_FUNCTION(execCalcVelocity); \
 	DECLARE_FUNCTION(execCalcImpactForce); \
 	DECLARE_FUNCTION(execCalcInertiaForce); \
+	DECLARE_FUNCTION(execCalcBrakeForce); \
 	DECLARE_FUNCTION(execCalcDragForce); \
 	DECLARE_FUNCTION(execCalcSuspensionForce); \
 	DECLARE_FUNCTION(execCalcGravityForce); \
 	DECLARE_FUNCTION(execCalcDriveForce); \
 	DECLARE_FUNCTION(execSphereTraceGround); \
+	DECLARE_FUNCTION(execCallBrake); \
 	DECLARE_FUNCTION(execCallSteering); \
 	DECLARE_FUNCTION(execCallThrotlle); \
 	DECLARE_FUNCTION(execSelectGear); \
