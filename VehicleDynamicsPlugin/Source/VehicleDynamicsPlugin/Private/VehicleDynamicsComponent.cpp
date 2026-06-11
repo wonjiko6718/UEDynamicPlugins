@@ -15,7 +15,7 @@ void UVehicleDynamicsComponent::BeginPlay()
 {
 	Super::BeginPlay();
     BeginSetting();
-    OwnerPawnMovement->Deactivate();
+    if(!bIsAIPossess) OwnerPawnMovement->Deactivate();
 	
 }
 
@@ -42,8 +42,10 @@ void UVehicleDynamicsComponent::GetLifetimeReplicatedProps(TArray<FLifetimePrope
     DOREPLIFETIME(UVehicleDynamicsComponent, FinalBodyRot);
     DOREPLIFETIME(UVehicleDynamicsComponent, FinalWheelsLoc);
     DOREPLIFETIME(UVehicleDynamicsComponent, FinalGroundedLoc);
+    DOREPLIFETIME(UVehicleDynamicsComponent, AngularVelocity);
     DOREPLIFETIME(UVehicleDynamicsComponent, ThrottleInput);
     DOREPLIFETIME(UVehicleDynamicsComponent, SteeringInput);
+    DOREPLIFETIME(UVehicleDynamicsComponent, BrakeInput);
     DOREPLIFETIME(UVehicleDynamicsComponent, SelectedGearNum);
 }
 
@@ -121,7 +123,7 @@ void UVehicleDynamicsComponent::BeginSetting()
 
             //휠 연산용 값 저장
             if (WheelData.X > WheelMaxOffsetX) WheelMaxOffsetX = WheelData.X; // 정규화용 바퀴 최대거리 저장
-            if (WheelData.X > WheelMaxOffsetY) WheelMaxOffsetY = WheelData.Y; // 정규화용 바퀴 최대거리 저장
+            if (WheelData.Y > WheelMaxOffsetY) WheelMaxOffsetY = WheelData.Y; // 정규화용 바퀴 최대거리 저장
             WheelCenterOffsetX += WheelData.X; // 우선 연산 전, 모두 더함
             WheelCenterOffsetY += WheelData.Y; // 우선 연산 전, 모두 더함
 
@@ -159,10 +161,13 @@ void UVehicleDynamicsComponent::TickVehicle(float DeltaTime)
     for (int i = 0; i < WheelBonesArray.Num(); i++) SphereTraceGround(i); // 바퀴 접지
     CalcGravityForce(DeltaTime); // 중력 연산
     for (int i = 0; i < WheelBonesArray.Num(); i++) CalcSuspensionForce(i, DeltaTime); // 서스펜션 연산
-    CalcDriveForce(DeltaTime);  // 주행 힘 연산
-    CalcDragForce(DeltaTime);  // 마찰저항 힘계산
-    CalcInertiaForce(DeltaTime); // 관성 힘계산
-    CalcVelocity(DeltaTime); // 최종 속도 계산
+    if (!bIsAIPossess)
+    {
+        CalcDriveForce(DeltaTime);  // 주행 힘 연산
+        CalcDragForce(DeltaTime);  // 마찰저항 힘계산
+        CalcInertiaForce(DeltaTime); // 관성 힘계산
+        CalcVelocity(DeltaTime); // 최종 속도 계산
+    }
     ApplyFinalTransform(DeltaTime); // 차체 위치 및 움직임 업데이트
 }
 
@@ -200,6 +205,7 @@ void UVehicleDynamicsComponent::CalcDriveForce(float DeltaTime)
     float GroundedRatio = (float)GroundedCount / (float)WheelBonesArray.Num();
 
     FVector ForwardDir = GetOwner()->GetActorForwardVector();
+    if (GearForwardArray[SelectedGearNum] == 1) ForwardDir = -ForwardDir;
     float CurrentForwardSpeed = FVector::DotProduct(CurrentVelocity, ForwardDir);
     float TargetSpeed = BaseMaxSpeed * ThrottleInput;
 
@@ -214,7 +220,6 @@ void UVehicleDynamicsComponent::CalcDriveForce(float DeltaTime)
     // 진행 방향 부호에 맞춰 유지력 적용
     float Direction = FMath::Sign(ThrottleInput);
     FinalForce += ForwardDir * (Direction * MaintainForce + AccelForce) * GroundedRatio;
-
 }
 void UVehicleDynamicsComponent::CalcGravityForce(float DeltaTime)
 {
@@ -289,20 +294,21 @@ void UVehicleDynamicsComponent::CalcDragForce(float DeltaTime)
     if (HorizontalVelocity.IsNearlyZero()) return;
 
     float StopThreshold = 50.f; // 이 속도 이하에서는 비례 적용
+    bool bNoInput = FMath::IsNearlyZero(ThrottleInput); // 입력 없음 판정
 
     FVector ForwardDir = GetOwner()->GetActorForwardVector();
     float ForwardSpeed = FVector::DotProduct(HorizontalVelocity, ForwardDir);
     float ForwardScale = (FMath::Abs(ForwardSpeed) < StopThreshold)
         ? (ForwardSpeed / StopThreshold)   // 저속: -1~1 비례 → 0 근처에서 저항도 0
         : FMath::Sign(ForwardSpeed);       // 일반: 일정
-    FinalForce += -ForwardDir * ForwardScale * ForwardDrag * TotalMass * GroundedRatio;
+    FinalForce += -ForwardDir * ForwardScale * ForwardDrag * TotalMass * Surfacefriction  * GroundedRatio;
 
     FVector RightDir = GetOwner()->GetActorRightVector();
     float LateralSpeed = FVector::DotProduct(HorizontalVelocity, RightDir);
     float LateralScale = (FMath::Abs(LateralSpeed) < StopThreshold)
         ? (LateralSpeed / StopThreshold)
         : FMath::Sign(LateralSpeed);
-    FinalForce += -RightDir * LateralScale * LateralDrag * TotalMass * GroundedRatio;
+    FinalForce += -RightDir * LateralScale * LateralDrag * TotalMass * Surfacefriction * GroundedRatio;
 }
 void UVehicleDynamicsComponent::CalcInertiaForce(float DeltaTime)
 {
@@ -397,13 +403,21 @@ void UVehicleDynamicsComponent::SphereTraceGround(int WheelIdx)
 
 void UVehicleDynamicsComponent::CalcVelocity(float DeltaTime)
 {
+    float StopSnapThreshold = 5.0f;
     PrevVelocity = CurrentVelocity; // 이전 속도 저장
 
     FVector Acceleration = FinalForce / TotalMass; // F = ma : 가속도를 구함
     CurrentVelocity += Acceleration * DeltaTime; // 최종 속도 구함
 
-    // 디버그
-    //UE_LOG(LogTemp, Log, TEXT("CurrentVelocity : %.4f "), CurrentVelocity.Size());
+    if (FMath::IsNearlyZero(ThrottleInput))
+    {
+        FVector Horizontal = FVector(CurrentVelocity.X, CurrentVelocity.Y, 0.f);
+        if (Horizontal.Size() < StopSnapThreshold)
+        {
+            CurrentVelocity.X = 0.f;
+            CurrentVelocity.Y = 0.f;
+        }
+    }
 
 }
 
@@ -428,9 +442,17 @@ void UVehicleDynamicsComponent::ApplyFinalTransform(float DeltaTime)
     FinalBodyLoc = NewLocation;
     FinalBodyRot = FRotator(NewPitch, CurrentRot.Yaw, NewRoll) + FRotator(0.f, SteeringInput* SteeringSpeed* DeltaTime, 0.f);
 
+    // 각속도 계산 (이번 프레임 회전 변화량 / DeltaTime)
+    FRotator DeltaRot = (FinalBodyRot - PrevBodyRot).GetNormalized();
+    AngularVelocity = FVector(DeltaRot.Roll, DeltaRot.Pitch, DeltaRot.Yaw) / DeltaTime;
+    PrevBodyRot = FinalBodyRot;
+
     // 최종 차체 적용 ===============================================================
-    GetOwner()->SetActorLocation(FinalBodyLoc, true);
-    GetOwner()->SetActorRotation(FinalBodyRot);
+    if (!bIsAIPossess)
+    {
+        GetOwner()->SetActorLocation(FinalBodyLoc, true);
+        GetOwner()->SetActorRotation(FinalBodyRot);
+    }
 
 }
 
@@ -439,6 +461,9 @@ void UVehicleDynamicsComponent::ApplyReplicatedTransform(float DeltaTime)
     FVector NewLoc = FMath::VInterpTo(GetOwner()->GetActorLocation(), FinalBodyLoc, DeltaTime, 10.f);
     FRotator NewRot = FMath::RInterpTo(GetOwner()->GetActorRotation(), FinalBodyRot, DeltaTime, 10.f);
 
-    GetOwner()->SetActorLocation(NewLoc);
-    GetOwner()->SetActorRotation(NewRot);
+    if (!bIsAIPossess)
+    {
+        GetOwner()->SetActorLocation(NewLoc);
+        GetOwner()->SetActorRotation(NewRot);
+    }
 }

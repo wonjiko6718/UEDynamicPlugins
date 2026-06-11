@@ -27,12 +27,13 @@ public:
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; // 서버 복제 함수
 
 	//Calc Setting Param : 기본값은 K1A2 기준
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting") bool bIsAIPossess = false; // AI 동작 여부, AI는 floating Pawn Movement를 통해 처리
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float MaxClimbingAngle = 20.f; // 최대 등판각도(각)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float Surfacefriction = 0.1f; //  표면마찰 계수 (하이퍼파라미터 보정값)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float Surfacefriction = 1.f; //  표면마찰 저항배율(1기본)
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float ForwardDrag = 1500.f;   // 전진방향 마찰저항
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float LateralDrag = 3000.f;  // 횡방향 마찰저항
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float ForwardDrag = 3000.f;   // 전진방향 마찰저항
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float LateralDrag = 4500.f;  // 횡방향 마찰저항
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") int32 SelectedGearNum = 0; // 선택된 기어 주소 - 기본값 : 첫번째 인자
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") TArray<float> GearMaxSpeedArray; // 기어별 최대 속도 배열(cm/s)
@@ -42,7 +43,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VelocityParam") float BaseAcceleration = 0.f; // 기어별 기준 가속도(cm/s)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VelocityParam") float SteeringSpeed = 100.f; // 회전 속도
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float GravityForceCoeff = 980.f; // 중력가속도 상수 9.8 (cm/s^2)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") float GravityForceCoeff = - 980.f; // 중력가속도 상수 9.8 (cm/s^2)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VelocityParam") int32 CalcInterval = 30; // 프레임 최적화를 위한 연산 주기 (fps)
 
 	//Vehicle Setting Param
@@ -55,11 +56,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wheel") float WheelCenterOffsetX = 0; // Pitch 정규화용 바퀴 중심거리
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Wheel") float WheelCenterOffsetY = 0; // Roll 정규화용 바퀴 중심거리
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wheel") float WheelRadius; // 바퀴 반경(구) - SphereTrace로 접지 위치 계산
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wheel") float WheelRadius = 30.f; // 바퀴 반경(구) - SphereTrace로 접지 위치 계산
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Suspension") float SpringStiffness; // 스프링 강도
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Suspension") float DamperStiffness; // 댐핑 상수
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Suspension") float RestLength = 17.5; // 휴지 길이 (cm)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Suspension") float SpringStiffness = 178000.0f; // 스프링 강도
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Suspension") float DamperStiffness = 28000.0f; // 댐핑 상수
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Suspension") float RestLength = 50.0f; // 휴지 길이 (cm)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Suspension") float BumpStopRatio = 0.9; // 최대 서스펜션 압축 비율
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Body") float TotalMass = 54500.0f; // 차체 전체 질량(kg)
@@ -70,20 +71,21 @@ public:
 	//최종 함수는 서버 복제 실행
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") FVector FinalForce; // 최종 적용 힘 크기 및 방향
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") FVector FinalBodyLoc; // 최종 적용 차체 위치 (힘 기반의 속력)
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") FRotator FinalBodyRot; // 최종 적용 차체 회전 (힘 기반의 방향)
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") TArray<FVector> FinalWheelsLoc; // 최종 적용 휠 위치
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "FinalValue") TArray<FVector> FinalGroundedLoc; // 최종 적용 접지 위치(트랙에 사용)
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "FinalValue") FVector FinalBodyLoc; // 최종 적용 차체 위치 (힘 기반의 속력)
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "FinalValue") FRotator FinalBodyRot; // 최종 적용 차체 회전 (힘 기반의 방향)
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "FinalValue") TArray<FVector> FinalWheelsLoc; // 최종 적용 휠 위치
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "FinalValue") TArray<FVector> FinalGroundedLoc; // 최종 적용 접지 위치(트랙에 사용)
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "FinalValue") FVector AngularVelocity; // 각속도 (deg/s, X=Roll, Y=Pitch, Z=Yaw)
 
 	UPROPERTY(Replicated, VisibleAnywhere, Category = "Input") float ThrottleInput; // 스로틀 인풋
 	UPROPERTY(Replicated, VisibleAnywhere, Category = "Input") float SteeringInput; // 조향 인풋
-	UPROPERTY(Replicated, EditAnywhere, Category = "Input") int32 GeerNum; // 기어 인풋
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "Input") float BrakeInput; // 브레이크 인풋
 
 	UPROPERTY(EditAnywhere, Category = "Debug") bool bDrawTrace = true; // 레이트레이스 디버그 옵션
 	UPROPERTY(EditAnywhere, Category = "Debug") float InputScale = 150; // 인풋 테스트 디버그 옵션
 
 	UPROPERTY(VisibleAnywhere, Category = "CalcState") FRotator CurrentBodyRotation; // 연산용 차체 회전 저장값
-
+	UPROPERTY(VisibleAnywhere, Category = "CalcState") FRotator PrevBodyRot; // 이전 프레임 회전 (각속도 계산용)
 	UPROPERTY(VisibleAnywhere, Category = "CalcState") float SuspensionPitchForce; // 서스펜션에 반영하기 위한 Pitch 힘
 	UPROPERTY(VisibleAnywhere, Category = "CalcState") float SuspensionRollForce; // 서스펜션에 반영하기 위한 Roll 힘
 
@@ -127,8 +129,8 @@ public:
 
 	//Final Calc
 	UFUNCTION(BlueprintCallable) void CalcVelocity(float DeltaTime); // 최종 속도 연산
-	UFUNCTION(BlueprintCallable) void ApplyFinalTransform(float DeltaTime); // 위치와 회전 연산
-	UFUNCTION(BlueprintCallable) void ApplyReplicatedTransform(float DeltaTime); // 위치와 회전 연산
+	UFUNCTION(BlueprintCallable) void ApplyFinalTransform(float DeltaTime); // 위치와 회전 연산 (서버)
+	UFUNCTION(BlueprintCallable) void ApplyReplicatedTransform(float DeltaTime); // 위치와 회전 복제 (클라이언트)
 
 
 

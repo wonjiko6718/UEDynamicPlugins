@@ -56,10 +56,11 @@ public: \
 		FinalBodyRot, \
 		FinalWheelsLoc, \
 		FinalGroundedLoc, \
+		AngularVelocity, \
 		ThrottleInput, \
 		SteeringInput, \
-		GeerNum, \
-		NETFIELD_REP_END=GeerNum	}; \
+		BrakeInput, \
+		NETFIELD_REP_END=BrakeInput	}; \
 	NO_API virtual void ValidateGeneratedRepEnums(const TArray<struct FRepRecord>& ClassReps) const override;
 
 
