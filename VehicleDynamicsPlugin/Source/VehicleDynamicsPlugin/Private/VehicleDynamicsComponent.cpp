@@ -22,9 +22,6 @@ void UVehicleDynamicsComponent::BeginPlay()
 void UVehicleDynamicsComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    UE_LOG(LogTemp, Warning, TEXT("[%s] Tick | Loc: %s"),
-        GetOwner()->HasAuthority() ? TEXT("SERVER") : TEXT("CLIENT"),
-        *GetOwner()->GetActorLocation().ToString());
     if (GetOwner()->HasAuthority()) // 서버에서만 실행
     {
         TickVehicle(DeltaTime);
@@ -46,6 +43,7 @@ void UVehicleDynamicsComponent::GetLifetimeReplicatedProps(TArray<FLifetimePrope
     DOREPLIFETIME(UVehicleDynamicsComponent, ThrottleInput);
     DOREPLIFETIME(UVehicleDynamicsComponent, SteeringInput);
     DOREPLIFETIME(UVehicleDynamicsComponent, BrakeInput);
+    DOREPLIFETIME(UVehicleDynamicsComponent, CurrentVelocity);
     DOREPLIFETIME(UVehicleDynamicsComponent, SelectedGearNum);
 }
 
@@ -159,6 +157,7 @@ void UVehicleDynamicsComponent::TickVehicle(float DeltaTime)
     SuspensionRollForce = 0.f; // 계산식 초기화
 
     for (int i = 0; i < WheelBonesArray.Num(); i++) SphereTraceGround(i); // 바퀴 접지
+    if (!bIsDrive) return;
     CalcGravityForce(DeltaTime); // 중력 연산
     for (int i = 0; i < WheelBonesArray.Num(); i++) CalcSuspensionForce(i, DeltaTime); // 서스펜션 연산
     if (!bIsAIPossess)
@@ -225,6 +224,10 @@ void UVehicleDynamicsComponent::CalcDriveForce(float DeltaTime)
     // 진행 방향 부호에 맞춰 유지력 적용
     float Direction = FMath::Sign(ThrottleInput);
     FinalForce += ForwardDir * (Direction * MaintainForce + AccelForce) * GroundedRatio;
+    UE_LOG(LogTemp, Warning, TEXT("[%s] GroundedRatio:%f TargetSpeed:%f CurFwdSpeed:%f SpeedError:%f DesiredAccel:%f AccelForce:%f MaintainForce:%f BaseMaxSpeed:%f BaseAccel:%f ThrottleInput:%f"),
+        *GetOwner()->GetName(),
+        GroundedRatio, TargetSpeed, CurrentForwardSpeed, SpeedError, DesiredAccel, AccelForce, MaintainForce,
+        BaseMaxSpeed, BaseAcceleration, ThrottleInput);
 }
 void UVehicleDynamicsComponent::CalcGravityForce(float DeltaTime)
 {

@@ -81,6 +81,7 @@ public:
 	UPROPERTY(Replicated, VisibleAnywhere, Category = "Input") float ThrottleInput; // 스로틀 인풋
 	UPROPERTY(Replicated, VisibleAnywhere, Category = "Input") float SteeringInput; // 조향 인풋
 	UPROPERTY(Replicated, VisibleAnywhere, Category = "Input") float BrakeInput; // 브레이크 인풋
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Input") bool bIsDrive = false; // 서버 권위성 시행 방지 인풋
 
 	UPROPERTY(EditAnywhere, Category = "Debug") bool bDrawTrace = true; // 레이트레이스 디버그 옵션
 	UPROPERTY(EditAnywhere, Category = "Debug") float InputScale = 150; // 인풋 테스트 디버그 옵션
@@ -96,9 +97,10 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "CalcState") USkeletalMeshComponent* OwnerSkeletalMeshComp; // 차량 본 정보 취득을 위한 스켈레탈 메시
 	UPROPERTY(VisibleAnywhere, Category = "CalcState") UFloatingPawnMovement* OwnerPawnMovement; // 차량 속도 제어를 위한 Pawn Movement
 
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "RuntimeState") FVector CurrentVelocity; // 현재 속도 (cm/s)
+
 private:
 
-	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") FVector CurrentVelocity; // 현재 속도 (cm/s)
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") FVector PrevVelocity; // 직전 속도 (cm/s)
 	UPROPERTY(VisibleAnywhere, Category = "RuntimeState") float CurrentTargetSpeed = 0.f; // 전진힘 계산용 목표속도
 

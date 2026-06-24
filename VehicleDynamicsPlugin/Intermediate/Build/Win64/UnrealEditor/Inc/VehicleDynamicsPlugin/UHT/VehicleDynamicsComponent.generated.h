@@ -63,7 +63,9 @@ public: \
 		ThrottleInput, \
 		SteeringInput, \
 		BrakeInput, \
-		NETFIELD_REP_END=BrakeInput	}; \
+		bIsDrive, \
+		CurrentVelocity, \
+		NETFIELD_REP_END=CurrentVelocity	}; \
 	NO_API virtual void ValidateGeneratedRepEnums(const TArray<struct FRepRecord>& ClassReps) const override;
 
 
